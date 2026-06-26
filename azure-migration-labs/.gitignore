@@ -1,0 +1,21 @@
+# Discos virtuais e imagens (nunca versionar - sao enormes)
+*.vhdx
+*.vhd
+*.iso
+*.avhdx
+
+# Segredos e credenciais (inegociavel - segredo vazado e eliminatorio)
+*.publishsettings
+*.pfx
+secrets.json
+appsettings.*.json
+.azure/
+*.cred
+
+# Arquivos temporarios do sistema
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Logs
+*.log

@@ -1,0 +1,27 @@
+# CI dos testes Pester.
+# Placeholder ativo a partir do momento em que o modulo ContosoLab e os
+# testes em tests/ existirem (labs mais avancados da trilha).
+
+name: pester-tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  pester:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          if (Test-Path ./tests) {
+            Install-Module Pester -Force -SkipPublisherCheck
+            Invoke-Pester ./tests -Output Detailed
+          } else {
+            Write-Host "Sem testes ainda - nada a executar."
+          }
