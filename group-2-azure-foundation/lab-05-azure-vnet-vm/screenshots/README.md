@@ -5,7 +5,7 @@ Prints de validacao do lab. Nomear no padrao `lab05-NN-descricao.png`.
 | Arquivo | Conteudo |
 |---|---|
 | `lab05-01-contexto-azure.png` | `Get-AzContext` confirmando a subscription |
-| `lab05-02-resource-group.png` | Resource Group no portal |
+| `02-Resource-group-overview.png` | Resource Group no portal |
 | `lab05-03-subnets.png` | As tres sub-redes da VNet |
 | `lab05-04-nsg-regras.png` | Regras inbound do NSG |
 | `lab05-05-vm-running.png` | VM criada e em execucao |
