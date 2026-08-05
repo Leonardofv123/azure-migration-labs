@@ -1,10 +1,10 @@
-# Lab 08 - VPN Site-to-Site (On-Premises ↔ Azure)
+# Lab 08 - VPN Site-to-Site (On-Premises e Azure)
 
 ## Objetivo
 
-Estabelecer conectividade privada entre o ambiente on-premises (`192.168.10.0/24`, no Hyper-V) e a VNet do Azure (`10.10.0.0/16`), através de um túnel IPsec/IKEv2 Site-to-Site, usando RRAS como gateway VPN do lado local.
+Estabelecer conectividade privada entre o ambiente on-premises (`192.168.10.0/24`, no Hyper-V) e a VNet do Azure (`10.10.0.0/16`), atraves de um tunel IPsec/IKEv2 Site-to-Site, usando RRAS como gateway VPN do lado local.
 
-**Resultado:** túnel estabelecido e validado no plano de controle. A conectividade end-to-end não fechou por uma limitação de infraestrutura do ambiente doméstico — NAT duplo — documentada em detalhe abaixo. Esse resultado é legítimo e está registrado como tal: a limitação encontrada é um cenário que a Microsoft não suporta oficialmente, e identificá-la exigiu eliminar sistematicamente todas as outras hipóteses.
+**Resultado:** tunel estabelecido e validado no plano de controle. A conectividade end-to-end nao fechou por uma limitacao de infraestrutura do ambiente domestico, o NAT duplo, documentada em detalhe abaixo. Esse resultado e legitimo e esta registrado como tal: a limitacao encontrada e um cenario que a Microsoft nao suporta oficialmente, e identifica-la exigiu eliminar sistematicamente todas as outras hipoteses.
 
 ## Estrutura criada
 
@@ -29,7 +29,7 @@ Estabelecer conectividade privada entre o ambiente on-premises (`192.168.10.0/24
                         v
               +----------------------+
               |      INTERNET        |
-              |  IP público dinâmico |
+              |  IP publico dinamico |
               +----------+-----------+
                          |
                          v
@@ -53,47 +53,49 @@ Estabelecer conectividade privada entre o ambiente on-premises (`192.168.10.0/24
     +--------------------------------------------------+
 ```
 
-## Pré-requisitos
+## Pre-requisitos
 
-- Lab 05 concluído (VNet e VM no Azure).
+- Lab 05 concluido (VNet e VM no Azure).
 - Uma VM adicional no Hyper-V para o gateway (`contoso-gw01`), com dois adaptadores: Lab-Internal e Default Switch.
-- IP público conhecido — e a consciência de que ele pode mudar durante o lab.
+- IP publico conhecido, e a consciencia de que ele pode mudar durante o lab.
 
 ## Conceitos
 
-**VPN Gateway** é o recurso que termina o túnel do lado da nuvem. Fica numa subnet dedicada (`GatewaySubnet`, com esse nome exato) e recebe um IP público. Diferente da maioria dos recursos de rede, **cobra por hora enquanto existir** e demora de 30 a 45 minutos para provisionar. Isso muda a forma de trabalhar: não dá para criar e destruir casualmente.
+**VPN Gateway** e o recurso que termina o tunel do lado da nuvem. Fica numa subnet dedicada (`GatewaySubnet`, com esse nome exato) e recebe um IP publico. Diferente da maioria dos recursos de rede, cobra por hora enquanto existir e demora de 30 a 45 minutos para provisionar. Isso muda a forma de trabalhar: nao da para criar e destruir casualmente.
 
-**Local Network Gateway (LNG)** é a representação, dentro do Azure, do que existe do outro lado do túnel. Guarda o IP público do gateway on-premises e as faixas de rede que existem lá. Sem o segundo, o Azure não sabe para onde rotear — e isso falha em silêncio.
+**Local Network Gateway (LNG)** e a representacao, dentro do Azure, do que existe do outro lado do tunel. Guarda o IP publico do gateway on-premises e as faixas de rede que existem la. Sem o segundo, o Azure nao sabe para onde rotear, e isso falha em silencio.
 
-**RouteBased vs PolicyBased.** Gateway RouteBased usa tabela de rotas; PolicyBased usa regras estáticas. RouteBased é o padrão moderno e o que este lab usa. Um detalhe que confunde: em gateway RouteBased, o Azure sempre negocia traffic selectors como `0.0.0.0/0`. Isso é normal e **não** indica problema.
+**RouteBased e PolicyBased.** Gateway RouteBased usa tabela de rotas, e PolicyBased usa regras estaticas. RouteBased e o padrao moderno e o que este lab usa. Um detalhe que confunde: em gateway RouteBased, o Azure sempre negocia traffic selectors como `0.0.0.0/0`. Isso e normal e nao indica problema.
 
-**NAT-T (NAT Traversal).** O protocolo ESP, que carrega os dados do túnel, não tem portas — o que impede o NAT tradicional de rastrear sessões. O NAT-T contorna encapsulando o ESP dentro de UDP 4500. Funciona bem com **um** nível de NAT. Com dois, o mapeamento de retorno se perde.
+**NAT-T (NAT Traversal).** O protocolo ESP, que carrega os dados do tunel, nao tem portas, o que impede o NAT tradicional de rastrear sessoes. O NAT-T contorna encapsulando o ESP dentro de UDP 4500. Funciona bem com um nivel de NAT. Com dois, o mapeamento de retorno se perde.
 
-**Plano de controle vs plano de dados.** Distinção central para entender o resultado deste lab. O **plano de controle** é a negociação do túnel (IKE) — é o que reporta "Connected". O **plano de dados** é o tráfego real passando dentro do túnel (ESP). Os dois podem estar em estados diferentes: um túnel pode reportar "Connected" com total honestidade e ainda assim não transportar um único pacote.
+**Plano de controle e plano de dados.** Distincao central para entender o resultado deste lab. O plano de controle e a negociacao do tunel (IKE), e e o que reporta "Connected". O plano de dados e o trafego real passando dentro do tunel (ESP). Os dois podem estar em estados diferentes: um tunel pode reportar "Connected" com total honestidade e ainda assim nao transportar um unico pacote.
 
 ## Como rodar
 
-Os scripts do lado Azure rodam **no host**. Os de configuração do RRAS rodam **dentro da GW01**, ou via `Invoke-Command` a partir do host.
+Os scripts do lado Azure rodam no host. Os de configuracao do RRAS rodam dentro da GW01, ou via `Invoke-Command` a partir do host.
 
-1. `01-gateway-subnet.ps1` — cria a `GatewaySubnet` com esse nome exato. O Azure identifica a subnet do gateway pelo nome, não por configuração.
+1. `01-gateway-subnet.ps1` cria a `GatewaySubnet` com esse nome exato. O Azure identifica a subnet do gateway pelo nome, nao por configuracao.
 
-2. `02-public-ip.ps1` — Public IP Standard com as três zonas. Obrigatório para o SKU `VpnGw1AZ`.
+2. `02-public-ip.ps1` cria o Public IP Standard com as tres zonas, obrigatorio para o SKU `VpnGw1AZ`.
 
-3. `03-vpn-gateway.ps1` — provisiona o gateway. **De 30 a 45 minutos.** O `--no-wait` devolve o terminal enquanto isso.
+3. `03-vpn-gateway.ps1` provisiona o gateway, com confirmacao antes de comecar. Leva de 30 a 45 minutos.
 
-4. `04-local-network-gateway.ps1` — cria o LNG com o IP público de casa **e** o prefixo `192.168.10.0/24`. O prefixo é obrigatório; sem ele o túnel conecta mas nada roteia.
+4. `04-local-network-gateway.ps1` cria o LNG. Detecta o IP publico automaticamente e ja inclui o prefixo `192.168.10.0/24`, que e obrigatorio.
 
-5. `05-connection.ps1` — amarra gateway e LNG com a PSK.
+5. `05-connection.ps1` amarra gateway e LNG. A PSK e pedida em runtime, nunca versionada.
 
-6. `06-configurar-rras.ps1` — roda na GW01: instala RRAS, habilita NAT-T no registro, desabilita firewall (ambiente de lab) e cria a interface S2S `To-Azure`.
+6. `06-configurar-rras.ps1` roda na GW01: instala RRAS, habilita NAT-T, ajusta a MTU, desabilita firewall (ambiente de lab) e cria a interface S2S `To-Azure`.
 
-7. Configurar rotas nas duas pontas — `10.10.0.0/16` na DC01, `192.168.10.0/24` na VM Azure.
+7. Configurar rotas nas duas pontas: `10.10.0.0/16` na DC01, `192.168.10.0/24` na VM Azure.
 
-8. Liberar ICMP no NSG e no firewall da VM Azure.
+8. `07-diagnostico.ps1` valida tudo na mesma execucao. Ver o item 5 dos desafios para entender por que isso importa.
 
-> **Custo.** Este é o lab mais caro da trilha por unidade de tempo. Tirar os prints e rodar `08-limpeza.ps1` assim que o objetivo for atingido.
+9. `08-limpeza.ps1` remove os recursos. Rodar assim que terminar, depois de tirar os prints.
 
-## Validação
+> **Custo.** Este e o lab mais caro da trilha por unidade de tempo.
+
+## Validacao
 
 ```powershell
 # Status da Connection
@@ -102,42 +104,33 @@ az network vpn-connection show `
     --query "{Status:connectionStatus, In:ingressBytesTransferred, Out:egressBytesTransferred}" `
     --output table
 
-# Parâmetros IKE negociados
+# Parametros IKE negociados
 az network vpn-connection list-ike-sas `
     --resource-group rg-network-prod-eus2 --name cn-s2s-eus2
-
-# Estado do túnel + rota + teste, TUDO na mesma execução
-Invoke-Command -VMName "contoso-gw01" -Credential $cred -ScriptBlock {
-    Get-VpnS2SInterface -Name "To-Azure" | Select-Object Name, ConnectionState
-    Get-NetRoute -AddressFamily IPv4 |
-        Where-Object { $_.DestinationPrefix -eq "10.10.0.0/16" } |
-        Select-Object DestinationPrefix, InterfaceAlias, InterfaceIndex
-    ping 10.10.1.4 -n 4
-}
 ```
 
-> A validação **na mesma execução** não é detalhe estilístico — é o que evita o erro de método descrito no item 5 dos desafios.
+Para o teste completo, usar `07-diagnostico.ps1`, que coleta estado do tunel, rota e ping na mesma execucao.
 
 ## Resultado
 
-| Item | Status | Evidência |
+| Item | Status | Evidencia |
 |---|---|---|
-| VPN Gateway provisionado | ✅ | `provisioningState: Succeeded` |
-| Connection criada | ✅ | `cn-s2s-eus2` |
-| Túnel estabelecido (Azure) | ✅ | `connectionStatus: Connected` |
-| Túnel estabelecido (RRAS) | ✅ | `ConnectionState: Connected` |
-| Fase 1 IKEv2 negociada | ✅ | AES256 / SHA1 / DHGroup2 |
-| Fase 2 (Quick Mode) | ✅ | SPIs inbound e outbound presentes |
-| Tráfego IKE | ✅ | 35,22 KiB in / 240 B out |
-| Rotas nas duas pontas | ✅ | `10.10.0.0/16` → `To-Azure` |
-| NSG e firewall liberados | ✅ | `test-ip-flow`: Allow |
-| **Ping end-to-end** | ❌ | 100% loss |
+| VPN Gateway provisionado | OK | `provisioningState: Succeeded` |
+| Connection criada | OK | `cn-s2s-eus2` |
+| Tunel estabelecido (Azure) | OK | `connectionStatus: Connected` |
+| Tunel estabelecido (RRAS) | OK | `ConnectionState: Connected` |
+| Fase 1 IKEv2 negociada | OK | AES256 / SHA1 / DHGroup2 |
+| Fase 2 (Quick Mode) | OK | SPIs inbound e outbound presentes |
+| Trafego IKE | OK | 35,22 KiB in / 240 B out |
+| Rotas nas duas pontas | OK | `10.10.0.0/16` para `To-Azure` |
+| NSG e firewall liberados | OK | `test-ip-flow`: Allow |
+| Ping end-to-end | FALHOU | 100% loss |
 
-A presença dos SPIs de Quick Mode confirma que a fase 2 fechou. O túnel está completo do ponto de vista de negociação.
+A presenca dos SPIs de Quick Mode confirma que a fase 2 fechou. O tunel esta completo do ponto de vista de negociacao.
 
 ## Desafios encontrados
 
-O lab mais difícil da trilha até aqui, por três motivos somados: o gateway custa por hora, o resultado depende de infraestrutura fora do seu controle (roteador, ISP, NAT do Hyper-V), e a falha é silenciosa — tudo reporta sucesso e nada funciona.
+O lab mais dificil da trilha ate aqui, por tres motivos somados: o gateway custa por hora, o resultado depende de infraestrutura fora do seu controle (roteador, ISP, NAT do Hyper-V), e a falha e silenciosa, porque tudo reporta sucesso e nada funciona.
 
 ### 1. SKU descontinuado
 
@@ -145,15 +138,15 @@ O lab mais difícil da trilha até aqui, por três motivos somados: o gateway cu
 The value 'VpnGw1' is not supported
 ```
 
-SKUs não-AZ foram descontinuados na região. Trocar para `VpnGw1AZ`.
+SKUs nao-AZ foram descontinuados na regiao. Trocar para `VpnGw1AZ`.
 
 ### 2. Public IP sem zonas
 
-O SKU `VpnGw1AZ` é zone-redundant e exige Public IP Standard com as três zonas declaradas: `--zone 1 2 3`.
+O SKU `VpnGw1AZ` e zone-redundant e exige Public IP Standard com as tres zonas declaradas: `--zone 1 2 3`.
 
-### 3. IP público residencial mudou no meio do lab
+### 3. IP publico residencial mudou no meio do lab
 
-Depois de horas com tudo funcionando, o túnel parou:
+Depois de horas com tudo funcionando, o tunel parou:
 
 ```
 Connect-VpnS2SInterface: The network connection between your computer and
@@ -161,29 +154,29 @@ the VPN server could not be established because the remote server is not
 responding.
 ```
 
-O IP público de casa mudou, e o LNG continuava apontando para o antigo — o Azure estava tentando falar com um endereço que não era mais o nosso.
+O IP publico de casa mudou, e o LNG continuava apontando para o antigo. O Azure estava tentando falar com um endereco que nao era mais o nosso.
 
 ```powershell
 (Invoke-WebRequest -Uri "https://api.ipify.org").Content
 ```
 
-> **O que ficou:** IP residencial é dinâmico. Para VPN S2S estável, seria necessário DNS dinâmico ou IP fixo contratado. Num lab, basta conferir o IP quando algo parar de funcionar sem motivo aparente.
+> **O que ficou:** IP residencial e dinamico. Para VPN S2S estavel, seria necessario DNS dinamico ou IP fixo contratado. Num lab, basta conferir o IP quando algo parar de funcionar sem motivo aparente.
 
-### 4. LNG sem prefixo de endereço — a falha mais silenciosa
+### 4. LNG sem prefixo de endereco, a falha mais silenciosa
 
-Túnel conectando normalmente, status Connected dos dois lados, e nenhum tráfego roteando. Não havia erro em lugar nenhum.
+Tunel conectando normalmente, status Connected dos dois lados, e nenhum trafego roteando. Nao havia erro em lugar nenhum.
 
-Pior: o comando de verificação mostrava o campo vazio **mesmo quando estava preenchido**, porque `--output table` não renderiza arrays. Isso levou a diagnóstico errado numa primeira passada.
+Pior: o comando de verificacao mostrava o campo vazio mesmo quando estava preenchido, porque `--output table` nao renderiza arrays. Isso levou a diagnostico errado numa primeira passada.
 
 ```powershell
-# Errado — esconde o array
+# Errado, esconde o array
 az network local-gateway show ... --output table
 
 # Certo
 az network local-gateway show ... --query "localNetworkAddressSpace"
 ```
 
-> **O que ficou:** dois aprendizados. O prefixo do LNG é obrigatório e sua ausência não gera erro nenhum. E `--output table` do Azure CLI esconde arrays — sempre validar com `--query` em JSON.
+> **O que ficou:** dois aprendizados. O prefixo do LNG e obrigatorio e sua ausencia nao gera erro nenhum. E `--output table` do Azure CLI esconde arrays, entao sempre validar com `--query` em JSON.
 
 ### 5. Rota migrando para o Loopback
 
@@ -191,34 +184,34 @@ az network local-gateway show ... --query "localNetworkAddressSpace"
 PING: transmit failed. General failure.
 ```
 
-Isso **não** é timeout. Timeout significa que o pacote saiu e não voltou. "Transmit failed" significa que o Windows não conseguiu nem transmitir.
+Isso nao e timeout. Timeout significa que o pacote saiu e nao voltou. "Transmit failed" significa que o Windows nao conseguiu nem transmitir.
 
-Quando o túnel cai, o RRAS remove a interface e a rota `10.10.0.0/16` escorrega para o Loopback:
+Quando o tunel cai, o RRAS remove a interface e a rota `10.10.0.0/16` escorrega para o Loopback:
 
 ```
 DestinationPrefix : 10.10.0.0/16
-InterfaceAlias    : Loopback Pseudo-Interface 1   <- rota órfã
+InterfaceAlias    : Loopback Pseudo-Interface 1   <- rota orfa
 InterfaceIndex    : 1
 ```
 
 O pacote era entregue ao loopback e morria ali.
 
-> **O que ficou — o erro de método mais custoso do lab:** durante várias tentativas, o estado do túnel e o estado da rota foram verificados em **momentos diferentes**. Como o túnel caía e voltava, cada verificação pegava um retrato diferente, e as conclusões não batiam. A correção foi validar tudo na mesma execução — foi isso que produziu a evidência conclusiva.
+> **O que ficou, o erro de metodo mais custoso do lab:** durante varias tentativas, o estado do tunel e o estado da rota foram verificados em momentos diferentes. Como o tunel caia e voltava, cada verificacao pegava um retrato diferente, e as conclusoes nao batiam. A correcao foi validar tudo na mesma execucao, e foi isso que produziu a evidencia conclusiva. O script `07-diagnostico.ps1` existe por causa disso.
 
 ### 6. Outros
 
-- **Serviço RRAS parado:** `Start-Service RemoteAccess`
-- **Rota não persistida na VM Azure:** `route add -p` via RDP pode não persistir; validar via `run-command`
-- **Comando de reset removido:** `az network vpn-connection reset` não existe mais; usar `Disconnect`/`Connect-VpnS2SInterface`
+- **Servico RRAS parado:** `Start-Service RemoteAccess`
+- **Rota nao persistida na VM Azure:** `route add -p` via RDP pode nao persistir, entao validar via `run-command`
+- **Comando de reset removido:** `az network vpn-connection reset` nao existe mais, usar `Disconnect` e `Connect-VpnS2SInterface`
 
-## Limitação encontrada — NAT duplo
+## Limitacao encontrada, NAT duplo
 
-### A evidência
+### A evidencia
 
-Capturado numa **única execução**, garantindo que os três estados coexistem no mesmo instante:
+Capturado numa unica execucao, garantindo que os tres estados coexistem no mesmo instante:
 
 ```
-=== ESTADO DO TÚNEL RRAS ===
+=== ESTADO DO TUNEL RRAS ===
 Name     ConnectionState  Destination
 ----     ---------------  -----------
 To-Azure Connected        {<IP do Gateway>}
@@ -234,7 +227,7 @@ Request timed out. (x4)
     Packets: Sent = 4, Received = 0, Lost = 4 (100% loss)
 ```
 
-Túnel up, rota correta, interface correta — e o pacote não passa.
+Tunel up, rota correta, interface correta, e o pacote nao passa.
 
 ### O que foi eliminado
 
@@ -245,9 +238,9 @@ az network watcher test-ip-flow ... -> Access: Allow
                                       Rule: AllowVnetInBound
 ```
 
-Isso descarta de uma vez NSG, route table, propagação de rotas do gateway e firewall da VM. O caminho no Azure está limpo. Somado à rota correta do lado on-premises e ao túnel negociado nas duas fases, sobra apenas a camada de encapsulamento ESP.
+Isso descarta de uma vez NSG, route table, propagacao de rotas do gateway e firewall da VM. O caminho no Azure esta limpo. Somado a rota correta do lado on-premises e ao tunel negociado nas duas fases, sobra apenas a camada de encapsulamento ESP.
 
-### A causa provável
+### A causa provavel
 
 ```
 GW01 (192.168.10.1 / 172.20.129.160)
@@ -260,54 +253,54 @@ GW01 (192.168.10.1 / 172.20.129.160)
 Azure VPN Gateway
 ```
 
-O ESP não tem portas, o que impede o NAT tradicional de rastrear sessões. O NAT-T contorna encapsulando em UDP 4500 — e funciona com **um** nível de NAT. Com dois, o mapeamento de retorno se perde: o Azure responde, o roteador entrega ao host Hyper-V, e o NAT do Hyper-V não consegue determinar qual VM interna é o destino.
+O ESP nao tem portas, o que impede o NAT tradicional de rastrear sessoes. O NAT-T contorna encapsulando em UDP 4500, e funciona com um nivel de NAT. Com dois, o mapeamento de retorno se perde: o Azure responde, o roteador entrega ao host Hyper-V, e o NAT do Hyper-V nao consegue determinar qual VM interna e o destino.
 
-A assinatura de tráfego é consistente com isso:
+A assinatura de trafego e consistente com isso:
 
 ```
 Data in  : 35,22 KiB   <- Azure recebe normalmente
-Data out : 240 B       <- respostas não completam o caminho de volta
+Data out : 240 B       <- respostas nao completam o caminho de volta
 ```
 
-O "Connected" reportado pelos dois lados é honesto: refere-se ao plano de controle, que atravessa NAT sem problema. O plano de dados é que não fecha.
+O "Connected" reportado pelos dois lados e honesto: refere-se ao plano de controle, que atravessa NAT sem problema. O plano de dados e que nao fecha.
 
-A Microsoft **não suporta oficialmente** gateway VPN atrás de múltiplos níveis de NAT. É limitação de infraestrutura, não erro de configuração.
+A Microsoft nao suporta oficialmente gateway VPN atras de multiplos niveis de NAT. E limitacao de infraestrutura, nao erro de configuracao.
 
 ### Como resolver em ambiente real
 
 | Abordagem | Aplicabilidade |
 |---|---|
-| External vSwitch no Hyper-V | Remove o NAT #1 — cenário suportado |
+| External vSwitch no Hyper-V | Remove o NAT #1, cenario suportado |
 | Port forwarding UDP 500/4500 | Depende de suporte do roteador |
-| IP público dedicado | Solução de produção |
-| Azure VPN Client (P2S) | Alternativa quando S2S não é viável |
-| ExpressRoute | Produção enterprise, sem internet |
+| IP publico dedicado | Solucao de producao |
+| Azure VPN Client (P2S) | Alternativa quando S2S nao e viavel |
+| ExpressRoute | Producao enterprise, sem internet |
 
 ## Aprendizados
 
-**Diagnóstico**
+**Diagnostico**
 
-- "Connected" num túnel VPN indica apenas que o plano de controle funcionou. Não garante tráfego de dados.
-- A proporção entre ingress e egress é sinal forte: muito in e pouco out aponta para problema no caminho de retorno.
-- Estados coletados em momentos diferentes produzem diagnósticos falsos. Túnel, rota e teste devem sair da mesma execução.
-- `transmit failed. General failure.` não é a mesma coisa que `Request timed out.` O primeiro é problema local de rota; o segundo é o pacote saindo e não voltando.
-- `test-ip-flow` do Network Watcher elimina toda a camada Azure de uma vez. Vale usar cedo, não como último recurso.
+- "Connected" num tunel VPN indica apenas que o plano de controle funcionou. Nao garante trafego de dados.
+- A proporcao entre ingress e egress e sinal forte: muito in e pouco out aponta para problema no caminho de retorno.
+- Estados coletados em momentos diferentes produzem diagnosticos falsos. Tunel, rota e teste devem sair da mesma execucao.
+- `transmit failed. General failure.` nao e a mesma coisa que `Request timed out.` O primeiro e problema local de rota, o segundo e o pacote saindo e nao voltando.
+- `test-ip-flow` do Network Watcher elimina toda a camada Azure de uma vez. Vale usar cedo, nao como ultimo recurso.
 
 **Azure**
 
-- `--output table` não renderiza arrays. Validar com `--query` em JSON.
-- O prefixo do LNG é obrigatório e sua ausência não gera erro — apenas silêncio.
-- Em gateway RouteBased, traffic selectors `0.0.0.0/0` são normais.
+- `--output table` nao renderiza arrays. Validar com `--query` em JSON.
+- O prefixo do LNG e obrigatorio e sua ausencia nao gera erro, apenas silencio.
+- Em gateway RouteBased, traffic selectors `0.0.0.0/0` sao normais.
 
-**Operação**
+**Operacao**
 
 - VPN Gateway custa por hora. Deletar imediatamente ao fim do lab.
-- Tirar os prints **antes** de qualquer destruição. O custo de printar é zero; o de perder a evidência é refazer o lab.
-- NAT duplo é cenário não suportado. Identificar a topologia de rede **antes** de provisionar recursos que cobram por hora teria economizado horas de gateway rodando.
+- Tirar os prints antes de qualquer destruicao. O custo de printar e zero, o de perder a evidencia e refazer o lab.
+- NAT duplo e cenario nao suportado. Identificar a topologia de rede antes de provisionar recursos que cobram por hora teria economizado horas de gateway rodando.
 
 ## Limpeza
 
-Na ordem — a Connection precisa sair antes do Gateway:
+Na ordem, porque a Connection precisa sair antes do Gateway:
 
 ```powershell
 az network vpn-connection delete --resource-group rg-network-prod-eus2 --name cn-s2s-eus2
@@ -315,7 +308,7 @@ az network vnet-gateway delete --resource-group rg-network-prod-eus2 --name vng-
 az network local-gateway delete --resource-group rg-network-prod-eus2 --name lng-onprem-eus2
 ```
 
-A exclusão leva de 15 a 20 minutos. Confirmar com `az network vnet-gateway list`. O Public IP pode ser mantido para reuso.
+A exclusao leva de 15 a 20 minutos. Confirmar com `az network vnet-gateway list`. O Public IP pode ser mantido para reuso.
 
 ## Estrutura de arquivos
 
@@ -334,8 +327,6 @@ lab-08-vpn-site-to-site/
 └── screenshots/
 ```
 
-O PSK não é versionado — os scripts usam `Read-Host`, seguindo a convenção do repositório.
+O PSK nao e versionado. Os scripts usam `Read-Host`, seguindo a convencao do repositorio.
 
----
-
-**Próximo:** [Lab 09 - Monitoramento híbrido](../lab-09-monitoramento/) — não depende do túnel; os agentes se comunicam por HTTPS/443.
+**Proximo:** [Lab 09 - Monitoramento hibrido](../lab-09-monitoramento/), que nao depende do tunel porque os agentes se comunicam por HTTPS/443.
