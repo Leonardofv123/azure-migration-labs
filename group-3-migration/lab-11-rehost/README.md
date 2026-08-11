@@ -358,3 +358,24 @@ como voltar.
 A WEB01 original continua ligada no Hyper-V. O cutover de verdade
 (desligar a origem e apontar o trafego para o destino) fica para o
 Lab 12, junto com a validacao pos-migracao.
+
+---
+
+## Recursos destruidos apos validacao
+
+Depois de validar o site respondendo publicamente e coletar os
+screenshots, os recursos deste lab foram derrubados com
+`terraform destroy`.
+
+```
+NAO destruir a VM de destino em um cutover real, so em lab
+  Aqui a VM fez o papel de prova de conceito, sem usuario
+  dependendo dela. Em uma migracao real, depois do cutover
+  a VM de destino vira a producao e fica de pe - quem se
+  desliga e a origem on-premises, nao o contrario.
+```
+
+O codigo Terraform continua no repositorio. Rodar `terraform apply`
+de novo recria a mesma infraestrutura, com a ressalva de que os
+SKUs disponiveis na regiao podem mudar entre uma execucao e outra
+(foi exatamente isso que aconteceu durante este lab).
