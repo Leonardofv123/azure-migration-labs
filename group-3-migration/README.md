@@ -1,7 +1,7 @@
 # Grupo 3 - Migracao
 
-Terceiro grupo da trilha. Aqui a Contoso do Brasil finalmente sai do
-Hyper-V e vai para o Azure de verdade.
+Terceiro e ultimo grupo da trilha. Aqui a Contoso do Brasil sai do
+Hyper-V e vai para o Azure.
 
 Os dois primeiros grupos construiram os dois lados da ponte: o Grupo 1
 montou o ambiente on-premises completo (AD, DNS, DHCP, file server, IIS)
@@ -34,7 +34,7 @@ contoso-gw01   RRAS                      rsv-contoso-eus2
 |-----|--------|--------|
 | 10 | Azure Migrate: Discovery e Assessment | concluido |
 | 11 | Rehost: migracao da WEB01 para o Azure | concluido |
-| 12 | Validacao pos-migracao e cutover | pendente |
+| 12 | Validacao pos-migracao e cutover | concluido |
 
 ---
 
@@ -53,7 +53,7 @@ REFACTOR        reescreve a aplicacao
 A ordem de migracao comeca pela WEB01 por dois motivos: ela nao depende
 do AD para funcionar (o IIS sobe sem domain join) e e a menos acoplada
 ao resto do ambiente. DC01 e FS01 tem dependencia mutua via DNS e File
-Sync, e migram depois.
+Sync, e migrariam depois.
 
 ---
 
@@ -64,16 +64,30 @@ diagnostico completo esta no Lab 10, mas o resumo e: conexoes HTTPS com
 payload maior caem na rede residencial usada no lab, o mesmo padrao ja
 documentado no Lab 07 com o Entra Connect.
 
-Isso teve consequencia nos dois labs:
+Isso teve consequencia nos tres labs:
 
 ```
 LAB 10   discovery feito por import CSV em vez do Appliance
 LAB 11   rehost feito por IaC em vez de replicacao via ASR
+LAB 12   mapa de dependencias precisaria ser manual
 ```
 
-Nos dois casos o resultado do lab foi preservado: o assessment saiu
-com sizing e custo, e a WEB01 chegou no Azure servindo a mesma pagina.
-O que mudou foi o caminho, e cada README diz qual foi e por que.
+Nos tres casos o resultado do lab foi preservado: o assessment saiu
+com sizing e custo, a WEB01 chegou no Azure servindo a mesma pagina,
+e o processo de cutover ficou documentado com criterios reais de
+decisao. O que mudou foi o caminho, e cada README diz qual foi e por que.
+
+---
+
+## Ciclo de vida dos recursos
+
+Os recursos do Lab 11 foram criados, validados e destruidos com
+`terraform destroy` apos a coleta das evidencias. O codigo Terraform
+continua no repositorio e recria a infraestrutura quando necessario.
+
+Isso e proposital: em ambiente de estudo, manter uma VM de pe sem
+ninguem usando e so custo. Em migracao real a logica se inverte -
+depois do cutover, quem se desliga e a origem, nao o destino.
 
 ---
 
