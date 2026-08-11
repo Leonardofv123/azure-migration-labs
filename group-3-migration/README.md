@@ -13,17 +13,17 @@ hibrida, monitoramento). Este grupo atravessa.
 ## Contexto
 
 ```
-ON-PREMISES (Hyper-V)                    AZURE (eastus2 / brazilsouth)
+ON-PREMISES (Hyper-V)                    AZURE (eastus2)
 
 contoso-dc01   AD DS + DNS               vnet-contoso-eus2
 contoso-fs01   File Server + DHCP        vm-web-prod-eus2
 contoso-web01  IIS                       stcontosoeus2lab
 contoso-gw01   RRAS                      rsv-contoso-eus2
                                          law-contoso-eus2
-       |                                          
-       |            MIGRACAO                      
-       +--------------------------------->  Azure Migrate
-                                            (Grupo 3)
+       |
+       |            MIGRACAO
+       +--------------------------------->  vm-web01-migrated
+                                            (Lab 11)
 ```
 
 ---
@@ -33,7 +33,7 @@ contoso-gw01   RRAS                      rsv-contoso-eus2
 | Lab | Titulo | Status |
 |-----|--------|--------|
 | 10 | Azure Migrate: Discovery e Assessment | concluido |
-| 11 | Rehost: replicacao e migracao da WEB01 | pendente |
+| 11 | Rehost: migracao da WEB01 para o Azure | concluido |
 | 12 | Validacao pos-migracao e cutover | pendente |
 
 ---
@@ -41,11 +41,11 @@ contoso-gw01   RRAS                      rsv-contoso-eus2
 ## Estrategia de migracao
 
 A trilha usa o rehost (lift and shift) como estrategia principal. E o
-caminho mais direto: a VM sai do Hyper-V e chega no Azure praticamente
-igual, sem mudanca de arquitetura.
+caminho mais direto: a carga de trabalho sai do Hyper-V e chega no Azure
+sem mudanca de arquitetura.
 
 ```
-REHOST          a VM vai como esta            <- adotado aqui
+REHOST          a carga vai como esta         <- adotado aqui
 REPLATFORM      troca componentes por PaaS
 REFACTOR        reescreve a aplicacao
 ```
@@ -57,21 +57,30 @@ Sync, e migram depois.
 
 ---
 
-## Limitacao conhecida
+## Limitacao conhecida e como ela mudou o caminho
 
 O registro do Azure Migrate Appliance nao completa neste ambiente. O
 diagnostico completo esta no Lab 10, mas o resumo e: conexoes HTTPS com
 payload maior caem na rede residencial usada no lab, o mesmo padrao ja
 documentado no Lab 07 com o Entra Connect.
 
-O discovery foi feito por import CSV, que entrega assessment valido sem
-depender de conectividade continua.
+Isso teve consequencia nos dois labs:
+
+```
+LAB 10   discovery feito por import CSV em vez do Appliance
+LAB 11   rehost feito por IaC em vez de replicacao via ASR
+```
+
+Nos dois casos o resultado do lab foi preservado: o assessment saiu
+com sizing e custo, e a WEB01 chegou no Azure servindo a mesma pagina.
+O que mudou foi o caminho, e cada README diz qual foi e por que.
 
 ---
 
 ## Custos
 
-Diferente dos grupos anteriores, os labs de migracao criam recursos que
-cobram por hora durante a replicacao. Cada lab avisa o momento de deletar.
+Os labs de migracao criam recursos que cobram por hora. Cada lab avisa
+o momento de deletar e o que fica cobrando mesmo com a VM desligada
+(IP publico e disco continuam contando).
 
 Regra geral do repositorio: tirar print antes de destruir qualquer coisa.
