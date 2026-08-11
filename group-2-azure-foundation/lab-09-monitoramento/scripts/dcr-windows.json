@@ -1,0 +1,52 @@
+{
+  "location": "eastus2",
+  "properties": {
+    "dataSources": {
+      "performanceCounters": [
+        {
+          "name": "perfCounters",
+          "streams": ["Microsoft-Perf"],
+          "samplingFrequencyInSeconds": 60,
+          "counterSpecifiers": [
+            "\\Processor(_Total)\\% Processor Time",
+            "\\Memory\\Available MBytes",
+            "\\Memory\\% Committed Bytes In Use",
+            "\\LogicalDisk(_Total)\\% Free Space",
+            "\\LogicalDisk(_Total)\\Disk Transfers/sec",
+            "\\Network Interface(*)\\Bytes Total/sec",
+            "\\System\\Processor Queue Length"
+          ]
+        }
+      ],
+      "windowsEventLogs": [
+        {
+          "name": "eventLogs",
+          "streams": ["Microsoft-Event"],
+          "xPathQueries": [
+            "System!*[System[(Level=1 or Level=2 or Level=3)]]",
+            "Application!*[System[(Level=1 or Level=2 or Level=3)]]",
+            "Security!*[System[(EventID=4624 or EventID=4625 or EventID=4720 or EventID=4726)]]"
+          ]
+        }
+      ]
+    },
+    "destinations": {
+      "logAnalytics": [
+        {
+          "name": "law-destination",
+          "workspaceResourceId": "/subscriptions/<SUB_ID>/resourceGroups/rg-monitor-prod-eus2/providers/Microsoft.OperationalInsights/workspaces/law-contoso-eus2"
+        }
+      ]
+    },
+    "dataFlows": [
+      {
+        "streams": ["Microsoft-Perf"],
+        "destinations": ["law-destination"]
+      },
+      {
+        "streams": ["Microsoft-Event"],
+        "destinations": ["law-destination"]
+      }
+    ]
+  }
+}

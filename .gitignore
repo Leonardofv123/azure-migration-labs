@@ -19,3 +19,12 @@ desktop.ini
 
 # Logs
 *.log
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Bicep
+main.json
