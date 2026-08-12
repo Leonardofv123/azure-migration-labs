@@ -1,15 +1,14 @@
 # Screenshots - Lab 05
 
-Prints de validacao do lab. Nomear no padrao `lab05-NN-descricao.png`.
+Prints de validacao do lab.
 
 | Arquivo | Conteudo |
 |---|---|
-| `lab05-01-contexto-azure.png` | `Get-AzContext` confirmando a subscription |
-| `02-Resource-group-overview.png` | Resource Group no portal |
-| `lab05-03-subnets.png` | As tres sub-redes da VNet |
-| `lab05-04-nsg-regras.png` | Regras inbound do NSG |
-| `lab05-05-vm-running.png` | VM criada e em execucao |
-| `lab05-06-auto-shutdown.png` | Auto-shutdown configurado |
-| `lab05-07-terraform-plan.png` | `terraform plan` com 7 to add |
-| `lab05-08-terraform-apply.png` | `terraform apply` concluido |
-| `lab05-09-bicep-build.png` | `az bicep build` sem erros |
+| `01- Get-AzContext.png` | `Get-AzContext` confirmando a subscription |
+| `02 - Resource-group-overview.png` | Resource Group no portal |
+| `vnet-subnets.png` | As sub-redes da VNet |
+| `nsg-inbound-rules.png` | Regras inbound do NSG |
+| `05-vm-criada.png` | VM criada e em execucao |
+| `06-auto-shutdown.png` | Auto-shutdown configurado |
+| `07.1 -terraform-apply-complete.png` | `terraform apply` concluido |
+| `07.2-terraform-apply-complete.png.png` | `terraform apply` concluido, continuacao |
