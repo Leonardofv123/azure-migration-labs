@@ -1,6 +1,9 @@
 # CI dos testes Pester.
-# Placeholder ativo a partir do momento em que o modulo ContosoLab e os
-# testes em tests/ existirem (labs mais avancados da trilha).
+#
+# Os testes verificam higiene do repositorio: sintaxe dos scripts,
+# ausencia de segredos versionados, estrutura dos labs e convencoes de
+# documentacao. Nao provisionam nada no Azure, entao nao exigem
+# credenciais nem geram custo.
 
 name: pester-tests
 
@@ -13,15 +16,22 @@ on:
 jobs:
   pester:
     runs-on: windows-latest
+
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Install-Module Pester -Force -SkipPublisherCheck -Scope CurrentUser
+          Import-Module Pester -PassThru | Select-Object Name, Version
 
       - name: Run Pester tests
         shell: pwsh
         run: |
-          if (Test-Path ./tests) {
-            Install-Module Pester -Force -SkipPublisherCheck
-            Invoke-Pester ./tests -Output Detailed
-          } else {
-            Write-Host "Sem testes ainda - nada a executar."
-          }
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests'
+          $config.Output.Verbosity = 'Detailed'
+          $config.Run.Exit = $true
+
+          Invoke-Pester -Configuration $config
