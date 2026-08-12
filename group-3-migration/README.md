@@ -6,7 +6,8 @@ Hyper-V e vai para o Azure.
 Os dois primeiros grupos construiram os dois lados da ponte: o Grupo 1
 montou o ambiente on-premises completo (AD, DNS, DHCP, file server, IIS)
 e o Grupo 2 montou a fundacao Azure (rede, storage, backup, identidade
-hibrida, monitoramento). Este grupo atravessa.
+hibrida, monitoramento). Este grupo atravessa - e decide o que vale a
+pena atravessar.
 
 ---
 
@@ -35,47 +36,67 @@ contoso-gw01   RRAS                      rsv-contoso-eus2
 | 10 | Azure Migrate: Discovery e Assessment | concluido |
 | 11 | Rehost: migracao da WEB01 para o Azure | concluido |
 | 12 | Validacao pos-migracao e cutover | concluido |
+| 13 | Refactor: WEB01 para Azure App Service | concluido com limitacao documentada |
+| 14 | Framework de decisao dos 5 Rs | concluido |
 
 ---
 
-## Estrategia de migracao
+## O arco do grupo
 
-A trilha usa o rehost (lift and shift) como estrategia principal. E o
-caminho mais direto: a carga de trabalho sai do Hyper-V e chega no Azure
-sem mudanca de arquitetura.
+Os cinco labs seguem uma progressao proposital:
 
 ```
-REHOST          a carga vai como esta         <- adotado aqui
-REPLATFORM      troca componentes por PaaS
-REFACTOR        reescreve a aplicacao
+LAB 10   descobrir o que existe e quanto custa migrar
+LAB 11   migrar de fato (rehost)
+LAB 12   decidir se a migracao esta pronta para producao
+LAB 13   questionar se rehost era o melhor caminho
+LAB 14   aplicar o criterio a todas as cargas
 ```
 
-A ordem de migracao comeca pela WEB01 por dois motivos: ela nao depende
-do AD para funcionar (o IIS sobe sem domain join) e e a menos acoplada
-ao resto do ambiente. DC01 e FS01 tem dependencia mutua via DNS e File
-Sync, e migrariam depois.
+Os tres primeiros sao execucao. Os dois ultimos sao decisao - e e
+onde a diferenca entre migrar e migrar bem aparece.
 
 ---
 
-## Limitacao conhecida e como ela mudou o caminho
+## Estrategias aplicadas
 
-O registro do Azure Migrate Appliance nao completa neste ambiente. O
-diagnostico completo esta no Lab 10, mas o resumo e: conexoes HTTPS com
-payload maior caem na rede residencial usada no lab, o mesmo padrao ja
-documentado no Lab 07 com o Entra Connect.
+O Lab 14 consolida a analise, mas o resumo e:
 
-Isso teve consequencia nos tres labs:
+| Carga | Estrategia | Justificativa curta |
+|-------|-----------|---------------------|
+| contoso-web01 | Refactor | site sem dependencia de SO, cabe em PaaS |
+| contoso-fs01 | Replace | Azure Files substitui, File Sync ja configurado |
+| contoso-dc01 | Retain | raiz de identidade, sai depois de quem depende dela |
+| contoso-gw01 | Retire | sem rede local para rotear, VPN Gateway substitui |
+
+O rehost foi executado na WEB01 (Lab 11) como caminho mais direto, e
+o Lab 13 comparou com o refactor: 7 recursos contra 3, e reducao de
+aproximadamente 88 por cento no custo mensal.
+
+---
+
+## Limitacoes conhecidas
+
+Dois bloqueios de ambiente afetaram este grupo. Ambos estao
+documentados em detalhe nos labs onde apareceram.
 
 ```
-LAB 10   discovery feito por import CSV em vez do Appliance
-LAB 11   rehost feito por IaC em vez de replicacao via ASR
-LAB 12   mapa de dependencias precisaria ser manual
+LAB 10   Azure Migrate Appliance nao completa o registro
+         Conexoes HTTPS com payload maior caem na rede residencial
+         usada no lab - mesmo padrao do Lab 07 com Entra Connect.
+         Discovery feito por import CSV.
+         Consequencia no Lab 11: rehost por IaC em vez de ASR.
+         Consequencia no Lab 12: mapa de dependencias manual.
+
+LAB 13   Cota zerada para App Service Plan na subscription
+         Seis combinacoes testadas (Windows/Linux, B1/F1,
+         eastus2/brazilsouth) com o mesmo erro 401.
+         Terraform validado por plan, apply bloqueado.
 ```
 
-Nos tres casos o resultado do lab foi preservado: o assessment saiu
-com sizing e custo, a WEB01 chegou no Azure servindo a mesma pagina,
-e o processo de cutover ficou documentado com criterios reais de
-decisao. O que mudou foi o caminho, e cada README diz qual foi e por que.
+Em nenhum dos casos o resultado do lab foi perdido: o assessment saiu
+com sizing e custo, a WEB01 chegou no Azure servindo a mesma pagina, e
+a comparacao rehost x refactor esta fundamentada em codigo real.
 
 ---
 

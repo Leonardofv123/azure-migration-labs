@@ -23,7 +23,7 @@ Hyper-V, Windows Server 2022, Active Directory, DNS, PowerShell 7, Azure, Terraf
 | 2 | 05 | Azure VMs + Virtual Networks (IaaS base) | Concluido |
 | 2 | 06 | Azure Storage + Azure Backup | Concluido |
 | 2 | 07 | Microsoft Entra ID + Entra Connect (identidade hibrida) | Concluido |
-| 2 | 08 | VPN Site-to-Site (rede hibrida) | Concluido com limitacao documentada |
+| 2 | 08 | VPN Site-to-Site (rede hibrida) | Concluido (com limitacao documentada) |
 | 2 | 09 | Monitoramento + Seguranca hibrida | Concluido |
 | 3 | 10 | Azure Migrate: Discovery, Assessment e Rehost | Pendente |
 | 3 | 11 | Migracao de Aplicacoes (Refactor / Rearchitect) | Pendente |
@@ -107,13 +107,13 @@ Ao final do Grupo 2, a Contoso opera nos dois mundos ao mesmo tempo:
 
 ## Sobre as secoes de troubleshooting
 
-Cada README de lab tem uma secao de desafios documentando os problemas reais enfrentados, incluindo os diagnosticos que estavam errados e o que revelou o engano.
+Cada README de lab tem uma secao de desafios documentando os problemas reais enfrentados  incluindo os diagnosticos que estavam errados e o que revelou o engano.
 
 Isso e proposital. Os erros mais instrutivos da trilha nao foram de sintaxe, foram de metodo: trocar de regiao quando a variavel certa era outra, aplicar um fix que valia so por sessao, ou procurar um servico que nunca existiu com aquele nome.
 
 ## Autor
 
-Leonardo Fabricio Vieira Fernandes - Engenharia de Software, Inatel.
+Leonardo Fabricio Vieira Fernandes - Estudante de Engenharia de Software, Inatel.
 
 ## Licenca
 
