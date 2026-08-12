@@ -9,11 +9,15 @@ ate a nuvem, passo a passo.
 
 ## Visao geral
 
-Este repositorio documenta uma jornada pratica de Cloud Engineering /
+Este repositorio documenta uma jornada pratica de Cloud Engineering e
 Azure, organizada em grupos sequenciais de laboratorios. Cada lab parte
 de um cenario de negocio real e e resolvido por scripts reproduziveis,
-nao por cliques manuais - e os labs nao sao isolados entre si: os grupos
-seguintes migram e evoluem exatamente os recursos criados nos anteriores.
+nao por cliques manuais.
+
+Os labs tambem nao sao isolados entre si: os grupos seguintes migram e
+evoluem exatamente os recursos criados nos anteriores. O Lab 11 usa a
+VNet criada no Lab 05. O Lab 14 usa o custo calculado no Lab 10, o File
+Sync configurado no Lab 06 e o Entra Connect que subiu no Lab 07.
 
 O fio condutor: a Contoso do Brasil precisa sair de servidores locais
 (Hyper-V, Active Directory, file server, IIS) e migrar para o Azure
@@ -53,8 +57,8 @@ Azure App Service, Pester.
 
 ## Escopo
 
-A trilha cobre os cenarios que o ambiente da Contoso sustenta. Dois
-temas ficaram fora do escopo por decisao consciente:
+A trilha cobre os cenarios que o ambiente da Contoso sustenta. Tres
+temas ficaram fora do escopo, por decisao consciente:
 
 ```
 MIGRACAO DE BANCO DE DADOS (DMS)
@@ -65,19 +69,24 @@ AZURE SITE RECOVERY (DR)
   ASR depende do mesmo tipo de conectividade continua que bloqueou o
   Azure Migrate Appliance no Lab 10, e cobra por instancia protegida.
   O conceito de failover e failback esta coberto no Lab 12.
+
+PROJETO CAPSTONE
+  A integracao entre os labs acontece ao longo do caminho, nao em um
+  projeto final separado. Um capstone aqui seria repetir a trilha.
 ```
 
 ---
 
 ## Como navegar
 
-Os laboratorios sao organizados em grupos (fases da jornada).
+Os laboratorios sao organizados em grupos, que correspondem as fases da
+jornada.
 
 O Grupo 1 reune toda a fundacao on-premises:
 
 ```
 group-1-onpremises-foundation/
-├── README.md             visao geral da fase
+├── README.md
 ├── lab-01-hyperv/
 ├── lab-02-active-directory/
 ├── lab-03-dhcp-fileserver/
@@ -97,7 +106,7 @@ group-2-azure-foundation/
 └── lab-09-monitoramento/
 ```
 
-O Grupo 3 migra e decide o que vale a pena migrar:
+O Grupo 3 migra, e decide o que vale a pena migrar:
 
 ```
 group-3-migration/
@@ -121,50 +130,62 @@ lab-XX-nome/
 
 ---
 
-## Estado do ambiente
-
-Ao final do Grupo 2, a Contoso opera nos dois mundos ao mesmo tempo:
+## Estado do ambiente ao final da trilha
 
 ```
-    ON-PREMISES (Hyper-V)                    AZURE
+ON-PREMISES (Hyper-V)                     AZURE
 
-contoso-dc01   192.168.10.10        vnet-contoso-eus2 (10.10.0.0/16)
-AD DS + DNS                           |
-+ Entra Connect (Lab 07)              +-- subnet-web  10.10.1.0/24
-+ Azure Arc + AMA (Lab 09)            |     vm-web-prod-eus2
-                                      |
-contoso-fs01   192.168.10.20          +-- GatewaySubnet 10.10.255.0/27
-File Server
-+ Azure File Sync (Lab 06)          law-contoso-eus2   (Log Analytics)
-+ Azure Arc + AMA (Lab 09)          rsv-contoso-eus2   (Backup)
-                                    stcontosoeus2lab   (Storage)
-contoso-web01  192.168.10.30        Microsoft Entra ID (tenant)
-IIS
-+ Azure Arc + AMA (Lab 09)
+contoso-dc01   192.168.10.10              vnet-contoso-eus2 (10.10.0.0/16)
+AD DS + DNS, dominio contoso.local          |
++ Entra Connect        (Lab 07)             +-- subnet-web    10.10.1.0/24
++ Azure Arc + AMA      (Lab 09)             |     vm-web-prod-eus2 (Lab 05)
+Decisao: Retain        (Lab 14)             |
+                                            +-- GatewaySubnet 10.10.255.0/27
+contoso-fs01   192.168.10.20
+File Server                               stcontosoeus2lab   Storage (Lab 06)
++ Azure File Sync      (Lab 06)             container documentos
++ Azure Arc + AMA      (Lab 09)             file share vendas
+Decisao: Replace       (Lab 14)             sync-contoso-eus2
 
-contoso-gw01   192.168.10.1
-RRAS (Lab 08)
+contoso-web01  192.168.10.30              rsv-contoso-eus2   Backup (Lab 06)
+IIS                                       law-contoso-eus2   Log Analytics (Lab 09)
++ Azure Arc + AMA      (Lab 09)             dcr-windows-contoso
+Migrado                (Lab 11)             DC01, FS01, WEB01 via Arc
+Decisao: Refactor      (Lab 14)
+                                          Microsoft Entra ID (Lab 07)
+contoso-gw01   192.168.10.1                 8 usuarios sincronizados
+RRAS, gateway e NAT
++ VPN Site-to-Site     (Lab 08)           migrate-contoso-eus2 (Lab 10)
+Decisao: Retire        (Lab 14)             assessment: 4/4 Ready
+                                            USD 440,45/mes em rehost puro
 ```
 
-No Grupo 3 a WEB01 atravessa (Lab 11) e o Lab 14 define o destino de
-cada uma das outras cargas.
+A WEB01 foi efetivamente migrada no Lab 11 e teve os recursos
+destruidos apos a validacao, conforme documentado la. As decisoes de
+Retain, Replace e Retire vem do framework aplicado no Lab 14.
 
 ---
 
 ## Convencoes
 
-- Toda infraestrutura nasce de script ou codigo (idempotente: rodar
-  duas vezes nao quebra).
-- Rede do laboratorio: `192.168.10.0/24`, isolada via vSwitch interno
-  com NAT.
-- Rede do Azure: `10.10.0.0/16`, segmentada em web / app / dados.
-- Nomenclatura de VMs: DC01, FS01, WEB01, GW01.
-- Nomenclatura de recursos Azure: `<tipo>-<nome>-<ambiente>-<regiao>`.
-- Segredos nunca sao versionados. Os scripts usam `Read-Host`,
-  `Get-Credential` ou variaveis `sensitive` do Terraform.
-- Diagramas em ASCII dentro de blocos de codigo, para ficarem legiveis
-  e faceis de copiar.
-- READMEs sem acentuacao e sem travessao, seguindo o padrao do repo.
+Toda infraestrutura nasce de script ou codigo, sempre idempotente:
+rodar duas vezes nao quebra.
+
+```
+Rede do laboratorio      192.168.10.0/24, vSwitch interno com NAT
+Rede do Azure            10.10.0.0/16
+Nomes de VM              DC01, FS01, WEB01, GW01
+Recursos Azure           <tipo>-<nome>-<ambiente>-<regiao>
+```
+
+Segredos nunca sao versionados. Os scripts usam `Read-Host`,
+`Get-Credential` ou variaveis marcadas como `sensitive` no Terraform.
+
+Diagramas ficam em ASCII dentro de blocos de codigo, para serem
+legiveis e faceis de copiar.
+
+Os READMEs seguem o padrao do repositorio: sem acentuacao e sem
+travessao.
 
 ---
 
@@ -180,23 +201,25 @@ outra, aplicar um fix que valia so por sessao, ou concluir que uma
 mensagem de erro apontava para permissao quando apontava para politica
 de dispositivo.
 
-Tres casos que se repetem com causas diferentes valem destaque:
+Um padrao que se repete tres vezes com causas diferentes vale destaque:
 
 ```
-COTA x CAPACIDADE
-  Lab 05   SkuNotAvailable era cota zerada da familia B
-  Lab 11   SkuNotAvailable era falta de capacidade da regiao
-  Lab 13   401 Unauthorized era cota zerada para App Service
-  
-  Mensagens parecidas, causas distintas. O que separa e testar
-  trocando uma variavel de cada vez.
+LAB 05   SkuNotAvailable era cota zerada da familia B na conta
+LAB 11   SkuNotAvailable era falta de capacidade da regiao
+LAB 13   401 Unauthorized era cota zerada para App Service Plan
 ```
+
+Mensagens parecidas, causas distintas. Cota se resolve pedindo
+aumento. Capacidade se resolve trocando de regiao ou esperando.
+Confundir os dois leva a tentar a solucao errada por horas, e o que
+separa os casos e testar trocando uma variavel de cada vez.
 
 ---
 
 ## Autor
 
-Leonardo Fabricio Vieira Fernandes - Engenharia de Software, Inatel.
+Leonardo Fabricio Vieira Fernandes, estudante de Engenharia de Software
+no Inatel.
 
 ---
 
