@@ -1,8 +1,9 @@
 # Azure Migration Labs
 
+
 Esse repo documenta uma migracao (fake, mas feita do jeito serio) de uma empresa ficticia, a Contoso do Brasil, saindo de um ambiente on-premises em Hyper-V e indo pro Azure. Tudo automatizado em PowerShell e Terraform, nada de clicar em portal e fingir que foi trabalho.
 
-A ideia surgiu porque eu queria aprender Azure de verdade e me preparar para certificação AZ-104. Entao montei um datacenter local fake com Hyper-V (AD, DHCP, file server, IIS) e fui migrando peça por peça pra nuvem, documentando os perrengues no caminho.
+A ideia surgiu porque eu queria aprender Azure migration de verdade, nao so passar em certificacao. Entao montei um datacenter local fake com Hyper-V (AD, DHCP, file server, IIS) e fui migrando peca por peca pra nuvem, documentando os perrengues no caminho.
 
 ## Como os labs se conectam
 
@@ -30,7 +31,7 @@ Nao é uma lista de exercicios soltos. Um lab usa o que o outro deixou pronto: o
 - Lab 13: Refactor da WEB01 pra App Service *(limitacao documentada aqui tambem)*
 - Lab 14: Framework de decisao dos 5 Rs, decidindo o destino de cada servidor
 
- O que ficou de fora, e por que
+## O que ficou de fora, e por que
 
 Nao tem migracao de banco de dados (DMS) porque a Contoso simplesmente nao tem banco. Criar um SQL Server so pra ter o que migrar seria forcar a barra.
 
@@ -38,9 +39,9 @@ Nao tem Azure Site Recovery porque esbarra na mesma limitacao de conectividade c
 
 E nao tem projeto capstone separado porque, na pratica, a integracao entre os labs JA é o capstone. Fazer mais um projeto no final seria repetir a trilha.
 
-Estrutura de pastas
+## Estrutura de pastas
 
-~~~~
+```
 group-1-onpremises-foundation/
 ├── lab-01-hyperv/
 ├── lab-02-active-directory/
@@ -60,13 +61,13 @@ group-3-migration/
 ├── lab-12-cutover/
 ├── lab-13-refactor/
 └── lab-14-framework-5rs/
+```
 
-
-Cada lab segue o mesmo molde: README com objetivo/topologia/passo a passo/desafios, pasta de scripts, terraform quando tem, e screenshots de validacao.
+Cada lab segue o mesmo molde: README com objetivo/topologia/passo a passo/desafios, pasta de scripts, terraform quando tem, e screenshots de validacao. As screenshots comecam a partir do Grupo 2, ja que o Grupo 1 fica so no ambiente on-premises local.
 
 ## Como ficou o ambiente no final
 
-
+```
 ON-PREMISES (Hyper-V)                     AZURE
 
 contoso-dc01   192.168.10.10              vnet-contoso-eus2 (10.10.0.0/16)
@@ -93,11 +94,11 @@ RRAS, gateway e NAT
 + VPN Site-to-Site     (Lab 08)           migrate-contoso-eus2 (Lab 10)
 Decisao: Retire        (Lab 14)             assessment: 4/4 Ready
                                             USD 440,45/mes em rehost puro
-
+```
 
 A WEB01 foi migrada de verdade no Lab 11 e os recursos foram destruidos logo depois da validacao (documentado la). As decisoes finais de Retain, Replace e Retire saem do framework aplicado no Lab 14.
 
- Algumas convencoes que segui
+## Algumas convencoes que segui
 
 - Tudo nasce de script ou codigo, e idempotente (rodar duas vezes nao pode quebrar nada)
 - Rede do lab: `192.168.10.0/24` (vSwitch interno com NAT) | Rede do Azure: `10.10.0.0/16`
@@ -106,17 +107,17 @@ A WEB01 foi migrada de verdade no Lab 11 e os recursos foram destruidos logo dep
 - Segredo nenhum vai versionado, sempre `Read-Host`, `Get-Credential` ou variavel `sensitive` no Terraform
 - Diagramas em ASCII dentro de bloco de codigo, pra dar pra copiar sem sofrer
 
- Sobre os perrengues
+## Sobre os perrengues
 
 Cada lab tem uma secao contando os problemas reais que apareceram, inclusive os diagnosticos errados que eu fiz antes de achar a causa certa. Isso e proposital: os erros mais uteis dessa trilha nao foram de sintaxe, foram de metodo. Trocar de regiao quando o problema era outra variavel, aplicar um fix que so durava a sessao, ou ler um erro de permissao onde na verdade era politica de dispositivo.
 
 Tem um padrao que se repetiu com a mesma mensagem de erro e causas completamente diferentes, e acho que vale registrar:
 
-
+```
 LAB 05   SkuNotAvailable -> cota zerada da familia B na conta
 LAB 11   SkuNotAvailable -> falta de capacidade na regiao
 LAB 13   401 Unauthorized -> cota zerada pro App Service Plan
-
+```
 
 Mensagem parecida, causa diferente. Cota se resolve pedindo aumento; capacidade se resolve trocando de regiao ou esperando. Confundir os dois te faz perder horas tentando a solucao errada. O que resolve e testar mudando uma variavel de cada vez, nao varias ao mesmo tempo.
 
