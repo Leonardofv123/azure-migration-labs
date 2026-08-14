@@ -21,13 +21,11 @@ contoso-gw01   RRAS                      rsv-contoso-eus2
 
 ## Labs
 
-| Lab | Titulo | Status |
-|---|---|---|
-| 10 | Azure Migrate: Discovery e Assessment | concluido |
-| 11 | Rehost: migracao da WEB01 para o Azure | concluido |
-| 12 | Validacao pos-migracao e cutover | concluido |
-| 13 | Refactor: WEB01 para Azure App Service | concluido com limitacao documentada |
-| 14 | Framework de decisao dos 5 Rs | concluido |
+- **Lab 10**: Azure Migrate, discovery e assessment. Concluido.
+- **Lab 11**: rehost, migracao da WEB01 pro Azure. Concluido.
+- **Lab 12**: validacao pos-migracao e cutover. Concluido.
+- **Lab 13**: refactor, WEB01 pro Azure App Service. Concluido com limitacao documentada.
+- **Lab 14**: framework de decisao dos 5 Rs. Concluido.
 
 ## O arco do grupo
 
@@ -45,14 +43,12 @@ Os tres primeiros sao execucao. Os dois ultimos sao decisao, e e ai que a difere
 
 ## Estrategias aplicadas
 
-O Lab 14 consolida a analise toda, mas resumindo:
+O Lab 14 consolida a analise toda, mas resumindo o que aconteceu com cada carga:
 
-| Carga | Estrategia | Por que |
-|---|---|---|
-| contoso-web01 | Refactor | site sem dependencia de SO, cabe em PaaS |
-| contoso-fs01 | Replace | Azure Files substitui, File Sync ja configurado |
-| contoso-dc01 | Retain | raiz de identidade, sai por ultimo, depois de quem depende dela |
-| contoso-gw01 | Retire | sem rede local pra rotear, VPN Gateway ja faz o papel dele |
+- **contoso-web01** virou refactor. O site nao tem dependencia de sistema operacional, entao cabe tranquilo em PaaS.
+- **contoso-fs01** virou replace. Azure Files substitui ele direto, e o File Sync ja estava configurado desde o Lab 06.
+- **contoso-dc01** ficou em retain. E a raiz de identidade, entao sai por ultimo, depois de todo mundo que depende dele.
+- **contoso-gw01** virou retire. Sem rede local pra rotear, o VPN Gateway ja assume o papel dele sozinho.
 
 O rehost foi o caminho executado na WEB01 (Lab 11), por ser o mais direto. Ja o Lab 13 comparou esse resultado com o refactor: 7 recursos contra 3, com reducao de quase 88% no custo mensal.
 
@@ -60,9 +56,9 @@ O rehost foi o caminho executado na WEB01 (Lab 11), por ser o mais direto. Ja o 
 
 Dois bloqueios de ambiente pegaram esse grupo. Os dois estao documentados com detalhe nos labs onde apareceram.
 
-**Lab 10**: o Azure Migrate Appliance nao completava o registro. Conexoes HTTPS com payload maior caiam na rede residencial que eu uso no lab, o mesmo padrao que ja tinha travado o Entra Connect no Lab 07. Resolvi fazendo o discovery por import de CSV. Isso teve efeito cascata: no Lab 11 o rehost saiu por IaC em vez de ASR, e no Lab 12 o mapa de dependencias ficou manual.
+No **Lab 10**, o Azure Migrate Appliance nao completava o registro. Conexoes HTTPS com payload maior caiam na rede residencial que eu uso no lab, o mesmo padrao que ja tinha travado o Entra Connect no Lab 07. Resolvi fazendo o discovery por import de CSV. Isso teve efeito cascata: no Lab 11 o rehost saiu por IaC em vez de ASR, e no Lab 12 o mapa de dependencias ficou manual.
 
-**Lab 13**: cota zerada pra App Service Plan na subscription. Testei seis combinacoes (Windows/Linux, B1/F1, eastus2/brazilsouth) e todas bateram no mesmo erro 401. O Terraform validou certinho no plan, mas o apply ficou bloqueado.
+No **Lab 13**, a cota pra App Service Plan estava zerada na subscription. Testei seis combinacoes (Windows/Linux, B1/F1, eastus2/brazilsouth) e todas bateram no mesmo erro 401. O Terraform validou certinho no plan, mas o apply ficou bloqueado.
 
 Em nenhum dos dois casos o lab ficou incompleto: o assessment saiu com sizing e custo calculados, a WEB01 chegou no Azure servindo a mesma pagina, e a comparacao rehost x refactor ta fundamentada em codigo real, nao em suposicao.
 
