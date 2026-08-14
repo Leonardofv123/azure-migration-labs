@@ -10,20 +10,20 @@ Nao é uma lista de exercicios soltos. Um lab usa o que o outro deixou pronto: o
 
 ## Os labs
 
-**Grupo 1 - Fundacao on-premises**
+**Grupo 1: Fundacao on-premises**
 - Lab 01: Hyper-V + primeira VM Windows Server
 - Lab 02: Active Directory + DNS
 - Lab 03: DHCP + File Server
 - Lab 04: IIS
 
-**Grupo 2 - Chegando no Azure**
+**Grupo 2: Chegando no Azure**
 - Lab 05: VMs e Virtual Networks
 - Lab 06: Storage, Backup e File Sync
 - Lab 07: Entra ID + Entra Connect (identidade hibrida)
 - Lab 08: VPN Site-to-Site *(fechei com uma limitacao documentada, ve o README do lab)*
 - Lab 09: Monitoramento hibrido com Azure Monitor + Arc
 
-**Grupo 3 - Migrando de verdade**
+**Grupo 3: Migrando de verdade**
 - Lab 10: Azure Migrate, discovery e assessment *(tambem com limitacao documentada)*
 - Lab 11: Rehost da WEB01
 - Lab 12: Validacao pos-migracao e cutover
@@ -34,7 +34,7 @@ Nao é uma lista de exercicios soltos. Um lab usa o que o outro deixou pronto: o
 
 Nao tem migracao de banco de dados (DMS) porque a Contoso simplesmente nao tem banco. Criar um SQL Server so pra ter o que migrar seria forcar a barra.
 
-Nao tem Azure Site Recovery porque esbarra na mesma limitacao de conectividade continua que ja pegou o Azure Migrate Appliance no Lab 10 — e o conceito de failover/failback ja fica coberto no Lab 12.
+Nao tem Azure Site Recovery porque esbarra na mesma limitacao de conectividade continua que ja pegou o Azure Migrate Appliance no Lab 10. O conceito de failover/failback ja fica coberto no Lab 12.
 
 E nao tem projeto capstone separado porque, na pratica, a integracao entre os labs JA é o capstone. Fazer mais um projeto no final seria repetir a trilha.
 
@@ -103,12 +103,12 @@ A WEB01 foi migrada de verdade no Lab 11 e os recursos foram destruidos logo dep
 - Rede do lab: `192.168.10.0/24` (vSwitch interno com NAT) | Rede do Azure: `10.10.0.0/16`
 - VMs sempre DC01, FS01, WEB01, GW01
 - Recursos Azure seguem `<tipo>-<nome>-<ambiente>-<regiao>`
-- Segredo nenhum vai versionado — sempre `Read-Host`, `Get-Credential` ou variavel `sensitive` no Terraform
+- Segredo nenhum vai versionado, sempre `Read-Host`, `Get-Credential` ou variavel `sensitive` no Terraform
 - Diagramas em ASCII dentro de bloco de codigo, pra dar pra copiar sem sofrer
 
 ## Sobre os perrengues
 
-Cada lab tem uma secao contando os problemas reais que apareceram — inclusive os diagnosticos errados que eu fiz antes de achar a causa certa. Isso e proposital: os erros mais uteis dessa trilha nao foram de sintaxe, foram de metodo. Trocar de regiao quando o problema era outra variavel, aplicar um fix que so durava a sessao, ou ler um erro de permissao onde na verdade era politica de dispositivo.
+Cada lab tem uma secao contando os problemas reais que apareceram, inclusive os diagnosticos errados que eu fiz antes de achar a causa certa. Isso e proposital: os erros mais uteis dessa trilha nao foram de sintaxe, foram de metodo. Trocar de regiao quando o problema era outra variavel, aplicar um fix que so durava a sessao, ou ler um erro de permissao onde na verdade era politica de dispositivo.
 
 Tem um padrao que se repetiu com a mesma mensagem de erro e causas completamente diferentes, e acho que vale registrar:
 
@@ -118,10 +118,8 @@ LAB 11   SkuNotAvailable -> falta de capacidade na regiao
 LAB 13   401 Unauthorized -> cota zerada pro App Service Plan
 ```
 
-Mensagem parecida, causa diferente. Cota se resolve pedindo aumento; capacidade se resolve trocando de regiao ou esperando. Confundir os dois te faz perder horas tentando a solucao errada — o que resolve e testar mudando uma variavel de cada vez, nao varias ao mesmo tempo.
-
----
+Mensagem parecida, causa diferente. Cota se resolve pedindo aumento; capacidade se resolve trocando de regiao ou esperando. Confundir os dois te faz perder horas tentando a solucao errada. O que resolve e testar mudando uma variavel de cada vez, nao varias ao mesmo tempo.
 
 Feito por Leonardo Fabricio Vieira Fernandes, estudante de Engenharia de Software no Inatel.
 
-Licenca MIT — arquivo LICENSE tem os detalhes.
+Licenca MIT, arquivo LICENSE tem os detalhes.
