@@ -30,7 +30,7 @@ Nao é uma lista de exercicios soltos. Um lab usa o que o outro deixou pronto: o
 - Lab 13: Refactor da WEB01 pra App Service *(limitacao documentada aqui tambem)*
 - Lab 14: Framework de decisao dos 5 Rs, decidindo o destino de cada servidor
 
-## O que ficou de fora, e por que
+ O que ficou de fora, e por que
 
 Nao tem migracao de banco de dados (DMS) porque a Contoso simplesmente nao tem banco. Criar um SQL Server so pra ter o que migrar seria forcar a barra.
 
