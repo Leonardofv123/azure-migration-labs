@@ -2,7 +2,7 @@
 
 Esse repo documenta uma migracao (fake, mas feita do jeito serio) de uma empresa ficticia, a Contoso do Brasil, saindo de um ambiente on-premises em Hyper-V e indo pro Azure. Tudo automatizado em PowerShell e Terraform, nada de clicar em portal e fingir que foi trabalho.
 
-A ideia surgiu porque eu queria aprender Azure migration de verdade, nao so passar em certificacao. Entao montei um datacenter local fake com Hyper-V (AD, DHCP, file server, IIS) e fui migrando peca por peca pra nuvem, documentando os perrengues no caminho.
+A ideia surgiu porque eu queria aprender Azure de verdade e me preparar para certificação AZ-104. Entao montei um datacenter local fake com Hyper-V (AD, DHCP, file server, IIS) e fui migrando peça por peça pra nuvem, documentando os perrengues no caminho.
 
 ## Como os labs se conectam
 
