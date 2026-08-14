@@ -38,9 +38,9 @@ Nao tem Azure Site Recovery porque esbarra na mesma limitacao de conectividade c
 
 E nao tem projeto capstone separado porque, na pratica, a integracao entre os labs JA é o capstone. Fazer mais um projeto no final seria repetir a trilha.
 
-## Estrutura de pastas
+Estrutura de pastas
 
-```
+
 group-1-onpremises-foundation/
 ├── lab-01-hyperv/
 ├── lab-02-active-directory/
@@ -60,13 +60,13 @@ group-3-migration/
 ├── lab-12-cutover/
 ├── lab-13-refactor/
 └── lab-14-framework-5rs/
-```
+
 
 Cada lab segue o mesmo molde: README com objetivo/topologia/passo a passo/desafios, pasta de scripts, terraform quando tem, e screenshots de validacao.
 
 ## Como ficou o ambiente no final
 
-```
+
 ON-PREMISES (Hyper-V)                     AZURE
 
 contoso-dc01   192.168.10.10              vnet-contoso-eus2 (10.10.0.0/16)
@@ -93,11 +93,11 @@ RRAS, gateway e NAT
 + VPN Site-to-Site     (Lab 08)           migrate-contoso-eus2 (Lab 10)
 Decisao: Retire        (Lab 14)             assessment: 4/4 Ready
                                             USD 440,45/mes em rehost puro
-```
+
 
 A WEB01 foi migrada de verdade no Lab 11 e os recursos foram destruidos logo depois da validacao (documentado la). As decisoes finais de Retain, Replace e Retire saem do framework aplicado no Lab 14.
 
-## Algumas convencoes que segui
+ Algumas convencoes que segui
 
 - Tudo nasce de script ou codigo, e idempotente (rodar duas vezes nao pode quebrar nada)
 - Rede do lab: `192.168.10.0/24` (vSwitch interno com NAT) | Rede do Azure: `10.10.0.0/16`
@@ -106,17 +106,17 @@ A WEB01 foi migrada de verdade no Lab 11 e os recursos foram destruidos logo dep
 - Segredo nenhum vai versionado, sempre `Read-Host`, `Get-Credential` ou variavel `sensitive` no Terraform
 - Diagramas em ASCII dentro de bloco de codigo, pra dar pra copiar sem sofrer
 
-## Sobre os perrengues
+ Sobre os perrengues
 
 Cada lab tem uma secao contando os problemas reais que apareceram, inclusive os diagnosticos errados que eu fiz antes de achar a causa certa. Isso e proposital: os erros mais uteis dessa trilha nao foram de sintaxe, foram de metodo. Trocar de regiao quando o problema era outra variavel, aplicar um fix que so durava a sessao, ou ler um erro de permissao onde na verdade era politica de dispositivo.
 
 Tem um padrao que se repetiu com a mesma mensagem de erro e causas completamente diferentes, e acho que vale registrar:
 
-```
+
 LAB 05   SkuNotAvailable -> cota zerada da familia B na conta
 LAB 11   SkuNotAvailable -> falta de capacidade na regiao
 LAB 13   401 Unauthorized -> cota zerada pro App Service Plan
-```
+
 
 Mensagem parecida, causa diferente. Cota se resolve pedindo aumento; capacidade se resolve trocando de regiao ou esperando. Confundir os dois te faz perder horas tentando a solucao errada. O que resolve e testar mudando uma variavel de cada vez, nao varias ao mesmo tempo.
 
