@@ -40,7 +40,7 @@ E nao tem projeto capstone separado porque, na pratica, a integracao entre os la
 
 Estrutura de pastas
 
-
+~~~~
 group-1-onpremises-foundation/
 ├── lab-01-hyperv/
 ├── lab-02-active-directory/
