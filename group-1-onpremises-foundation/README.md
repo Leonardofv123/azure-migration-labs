@@ -1,160 +1,78 @@
-# Fase 1: Fundação On-Premises Automatizada
+# Grupo 1: Fundacao On-Premises Automatizada
 
-> Grupo 1 da jornada de migração Azure da Contoso do Brasil: recriar, por
-> meio de Infraestrutura como Código (PowerShell idempotente), um ambiente
-> on-premises semelhante ao encontrado no início de um projeto real de
-> migração para a nuvem.
+Primeira fase da jornada de migracao Azure da Contoso do Brasil. A ideia aqui e recriar, via infraestrutura como codigo (scripts PowerShell idempotentes), um ambiente on-premises parecido com o que voce encontra no comeco de um projeto real de migracao pra nuvem.
 
----
+## O cenario
 
-## Cenário de Negócio
+Antes de migrar qualquer coisa pro Azure, voce precisa entender a infraestrutura que ja existe. Essa etapa serve pra identificar os servicos rodando, as dependencias entre eles e como o ambiente foi organizado antes de qualquer migracao comecar.
 
-Antes de migrar qualquer ambiente para o Azure, é necessário compreender a
-infraestrutura existente. Essa etapa permite identificar os serviços em
-execução, suas dependências e a forma como o ambiente foi organizado antes
-da migração.
+A Contoso do Brasil e uma empresa ficticia com infraestrutura hospedada em servidores fisicos, dentro do proprio datacenter. O ambiente tem um controlador de dominio, um servidor de arquivos e um portal interno. Como acontece em muita empresa por ai, essa infraestrutura tem pouca documentacao e quase nenhuma automacao. Esse e o ambiente As Is, o ponto de partida da trilha.
 
-A Contoso do Brasil é uma empresa fictícia cuja infraestrutura está
-hospedada em servidores físicos dentro do próprio datacenter. O ambiente é
-composto por um controlador de domínio, um servidor de arquivos e um portal
-interno. Como acontece em muitas empresas, essa infraestrutura possui pouca
-documentação e praticamente nenhuma automação. Esse é o ambiente **As-Is**,
-utilizado como ponto de partida para a jornada de migração apresentada neste
-repositório.
+O Grupo 1 recria esse ambiente usando Hyper-V e scripts PowerShell feitos de forma idempotente, ou seja, rodar duas vezes nao gera configuracao duplicada nem quebra nada.
 
-O Grupo 1 recria esse ambiente utilizando Hyper-V e scripts PowerShell
-desenvolvidos de forma idempotente, permitindo que sejam executados mais de
-uma vez sem gerar configurações duplicadas ou inconsistências.
+Alem de deixar um ambiente funcional de pe, essa fase cria uma base documentada e reproduzivel pra tudo que vem depois: as fases que vao avaliar, integrar e migrar essa infraestrutura pro Azure.
 
-Além de disponibilizar um ambiente funcional, esta fase estabelece uma base
-documentada e reproduzível para as próximas etapas do projeto, que irão
-avaliar, integrar e migrar essa infraestrutura para o Azure.
+No final dessa fase a Contoso tem uma floresta funcional do Active Directory com estrutura organizacional, distribuicao automatica de IP e um servidor de arquivos organizado por departamento, e um portal web interno publicado com HTTPS. Tudo criado e validado por script, servindo como o estado inicial da infraestrutura antes das proximas fases.
 
-Ao final desta fase, a Contoso possui:
+## Tecnologias usadas
 
-* Uma floresta funcional do Active Directory com estrutura organizacional.
-* Distribuição automática de endereços IP e um servidor de arquivos
-  organizado por departamento.
-* Um portal web interno publicado com HTTPS.
+- **PowerShell 7**, pra criar, configurar e validar toda a infraestrutura via script, cortando configuracao manual
+- **Hyper-V**, o hypervisor que hospeda todas as VMs, com um vSwitch interno isolado com NAT (sem expor nada pra rede domestica ou corporativa)
+- **Windows Server 2022** (Standard Evaluation, Desktop Experience), o sistema usado em todas as VMs dessa fase
+- **Active Directory Domain Services + DNS**, pra autenticacao, gerenciamento de identidade e resolucao de nomes
+- **DHCP**, distribuindo IP, gateway e DNS automaticamente, autorizado dentro do Active Directory
+- **File Server** com NTFS e SMB, compartilhamentos separados por departamento
+- **IIS**, hospedando o portal interno com HTTPS e certificado autoassinado
 
-Todo o ambiente é criado e validado por scripts PowerShell, servindo como o
-estado inicial da infraestrutura antes das próximas fases da migração.
+## O que cada lab implementa
 
----
+**Lab 01, Fundacao Hyper-V**
+Provisiona a primeira VM (DC01) no Hyper-V. Cria a estrutura de pastas do projeto, configura o vSwitch interno (Lab-Internal) com NAT na rede 192.168.10.0/24 e sobe a maquina virtual com 4 GB de memoria, 2 vCPUs e Generation 2, deixando tudo pronto pra instalar o Windows Server.
 
-## Tecnologias Utilizadas
+**Lab 02, Active Directory Domain Services e DNS**
+A DC01 vira Controlador de Dominio, criando a floresta contoso.local junto com o DNS. Tambem cria cinco Unidades Organizacionais (TI, Vendas, Financeiro, Diretoria e ServiceAccounts) e importa usuarios e grupos automaticamente de um CSV.
 
-* **PowerShell 7** - utilizado para criar, configurar e validar toda a infraestrutura por meio de scripts, reduzindo configurações manuais.
-* **Hyper-V** - hypervisor responsável por hospedar todas as máquinas virtuais, utilizando um vSwitch interno isolado com NAT (sem exposição à rede doméstica ou corporativa).
-* **Windows Server 2022** (Standard Evaluation, Desktop Experience) - sistema operacional utilizado em todas as VMs desta fase.
-* **Active Directory Domain Services (AD DS) + DNS** - responsáveis pela autenticação, gerenciamento de identidade e resolução de nomes.
-* **DHCP** - distribuição automática de endereços IP, gateway e DNS, autorizado no Active Directory.
-* **File Server (NTFS + SMB)** - compartilhamentos separados por departamento utilizando permissões NTFS e SMB.
-* **IIS (Internet Information Services)** - hospedagem do portal interno utilizando HTTPS com certificado autoassinado.
+**Lab 03, DHCP e Servidor de Arquivos**
+A FS01 entra no dominio e assume o papel de servidor DHCP e servidor de arquivos. O DHCP fica autorizado no Active Directory e distribui IP na faixa 192.168.10.100 ate 192.168.10.200. Tambem cria compartilhamentos pra TI, Vendas e Financeiro, protegidos por permissao NTFS e SMB ligada aos grupos do AD do lab anterior.
 
----
+**Lab 04, Servidor Web IIS**
+A WEB01 entra no dominio e hospeda o portal interno intranet.contoso.local via IIS. O site sobe em HTTP e HTTPS com certificado autoassinado, usando um Application Pool dedicado. O registro DNS e criado remotamente na DC01 via `Invoke-Command`, sem precisar mexer direto no controlador de dominio.
 
-## O Que Cada Lab Implementa
+## Como rodar os scripts
 
-Esta seção descreve o que foi implementado em cada laboratório desta fase.
+Todo lab segue o mesmo fluxo. Os scripts sao numerados na ordem certa de execucao, e cada um valida a propria configuracao no final.
 
-### Lab 01 - Fundação Hyper-V
+Primeiro, os scripts que rodam no host, ou seja, no computador fisico. Eles criam e configuram as VMs no Hyper-V:
 
-Provisionamento da primeira VM (**DC01**) no Hyper-V. O laboratório cria a
-estrutura de diretórios do projeto, configura o vSwitch interno
-(**Lab-Internal**) com NAT na rede **192.168.10.0/24** e provisiona a máquina
-virtual utilizando 4 GB de memória, 2 vCPUs e Generation 2, deixando o
-ambiente preparado para a instalação do Windows Server.
-
-### Lab 02 - Active Directory Domain Services e DNS
-
-A máquina **DC01** é promovida a Controlador de Domínio, criando a floresta
-**contoso.local** juntamente com o serviço DNS. Também são criadas cinco
-Unidades Organizacionais (**TI**, **Vendas**, **Financeiro**, **Diretoria** e
-**ServiceAccounts**), além da importação automática de usuários e grupos a
-partir de um arquivo CSV.
-
-### Lab 03 - DHCP e Servidor de Arquivos
-
-A máquina **FS01** ingressa no domínio e assume as funções de servidor DHCP
-e servidor de arquivos.
-
-O DHCP é autorizado no Active Directory e distribui endereços IP na faixa
-**192.168.10.100** até **192.168.10.200**.
-
-Também são criados compartilhamentos para os departamentos de **TI**,
-**Vendas** e **Financeiro**, protegidos por permissões NTFS e SMB associadas
-aos grupos do Active Directory criados no laboratório anterior.
-
-### Lab 04 - Servidor Web IIS
-
-A máquina **WEB01** ingressa no domínio e hospeda o portal interno
-**intranet.contoso.local** utilizando o IIS.
-
-O site é publicado em HTTP e HTTPS por meio de um certificado autoassinado,
-utilizando um Application Pool dedicado. O registro DNS é criado
-remotamente na **DC01** utilizando **Invoke-Command**, dispensando
-configurações manuais diretamente no controlador de domínio.
-
----
-
-## Como Executar os Scripts (Padrão Geral)
-
-Todos os laboratórios seguem o mesmo fluxo de execução. Os scripts são
-numerados na ordem em que devem ser executados, e cada um realiza validações
-ao final da configuração.
-
-**1. Scripts executados no HOST (computador físico)**
-
-Esses scripts criam e configuram as máquinas virtuais no Hyper-V.
-
-```powershell
-# Sempre execute o PowerShell 7 como Administrador no host
+```
+# Sempre rode o PowerShell 7 como Administrador no host
 cd .\lab-0X-nome\scripts\
 .\01-estrutura-pastas.ps1
 ```
 
-Após cada execução, verifique a saída do script antes de prosseguir para a
-próxima etapa.
+Depois de cada execucao, vale conferir a saida antes de ir pro proximo passo.
 
-**2. Scripts executados dentro da máquina virtual**
+Depois, os scripts que rodam dentro da VM. Com a maquina ligada, abre o PowerShell como Administrador dentro dela:
 
-Depois que a VM estiver ligada, abra o PowerShell como Administrador dentro
-da própria máquina virtual.
-
-```powershell
+```
 .\01a-rename-ip.ps1
 Restart-Computer -Force
 ```
 
-Após a reinicialização, execute o próximo script da sequência.
+Apos reiniciar, roda o proximo script da sequencia.
 
-**3. Validação**
+Por fim, a validacao. Todo script termina mostrando uns `Get-*` pra confirmar que a configuracao pegou:
 
-Todos os scripts finalizam exibindo comandos **Get-*** para confirmar que
-a configuração foi aplicada corretamente.
-
-```powershell
+```
 Get-VM | Select-Object Name, State
 Get-ADUser -Filter * | Select-Object Name
 Get-Website | Format-Table -AutoSize
 ```
 
-Caso a saída não corresponda ao esperado, recomenda-se corrigir o problema
-antes de continuar para o próximo laboratório.
-
----
+Se a saida nao bater com o esperado, o ideal e corrigir ali mesmo antes de seguir pro proximo lab.
 
 ## Resumo
 
-Esta primeira fase recria a infraestrutura on-premises da empresa fictícia
-Contoso do Brasil utilizando Hyper-V, Windows Server 2022 e PowerShell.
+Essa primeira fase recria a infraestrutura on-premises da Contoso do Brasil usando Hyper-V, Windows Server 2022 e PowerShell. Ao longo dos quatro labs sobem um ambiente Hyper-V, uma floresta Active Directory, DHCP e File Server, e um portal interno no IIS com HTTPS.
 
-Ao longo dos quatro laboratórios são implementados um ambiente Hyper-V,
-uma floresta Active Directory, serviços de DHCP e File Server, além de um
-portal interno hospedado no IIS utilizando HTTPS.
-
-Todo o ambiente é criado por scripts idempotentes, permitindo sua execução
-novamente sempre que necessário e garantindo uma infraestrutura
-reproduzível, documentada e preparada para as próximas etapas da jornada de
-migração para o Azure.
+Tudo criado por script idempotente, entao da pra rodar de novo sempre que precisar. E fica uma infraestrutura reproduzivel, documentada e pronta pras proximas etapas da jornada ate o Azure.
