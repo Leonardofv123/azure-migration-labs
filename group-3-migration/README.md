@@ -1,121 +1,99 @@
-# Grupo 3 - Migracao
+Grupo 3: Migração
 
-Terceiro e ultimo grupo da trilha. Aqui a Contoso do Brasil sai do
-Hyper-V e vai para o Azure.
+Este é o terceiro e último grupo da trilha. Aqui a Contoso do Brasil deixa o ambiente que estava rodando no Hyper-V e começa, de fato, a migração para o Azure.
 
-Os dois primeiros grupos construiram os dois lados da ponte: o Grupo 1
-montou o ambiente on-premises completo (AD, DNS, DHCP, file server, IIS)
-e o Grupo 2 montou a fundacao Azure (rede, storage, backup, identidade
-hibrida, monitoramento). Este grupo atravessa - e decide o que vale a
-pena atravessar.
+Nos dois primeiros grupos, preparei os dois lados desse processo: o Grupo 1 criou o ambiente on-premises completo, com AD, DNS, DHCP, File Server e IIS, enquanto o Grupo 2 montou a base no Azure, incluindo rede, storage, backup, identidade híbrida e monitoramento.
 
----
+Agora chegou a hora de conectar esses dois ambientes e decidir, para cada carga, o que realmente faz sentido migrar e de que forma.
 
-## Contexto
-
-```
+Contexto
 ON-PREMISES (Hyper-V)                    AZURE (eastus2)
-
 contoso-dc01   AD DS + DNS               vnet-contoso-eus2
 contoso-fs01   File Server + DHCP        vm-web-prod-eus2
 contoso-web01  IIS                       stcontosoeus2lab
 contoso-gw01   RRAS                      rsv-contoso-eus2
                                          law-contoso-eus2
        |
-       |            MIGRACAO
+       |              MIGRAÇÃO
        +--------------------------------->  vm-web01-migrated
-                                            (Lab 11)
-```
+                                             (Lab 11)
+Labs
+Lab	Título	Status
+10	Azure Migrate: Discovery e Assessment	Concluído
+11	Rehost: migração da WEB01 para o Azure	Concluído
+12	Validação pós-migração e cutover	Concluído
+13	Refactor: WEB01 para Azure App Service	Concluído, com limitação documentada
+14	Framework de decisão dos 5 Rs	Concluído
+O que foi feito neste grupo
 
----
+Os cinco labs foram pensados para seguir uma sequência lógica:
 
-## Labs
+LAB 10   entender o ambiente e estimar o custo da migração
+LAB 11   realizar a migração da WEB01 para o Azure
+LAB 12   validar o ambiente migrado e preparar o cutover
+LAB 13   comparar o rehost com uma abordagem de refactor
+LAB 14   aplicar os critérios dos 5 Rs às demais cargas
 
-| Lab | Titulo | Status |
-|-----|--------|--------|
-| 10 | Azure Migrate: Discovery e Assessment | concluido |
-| 11 | Rehost: migracao da WEB01 para o Azure | concluido |
-| 12 | Validacao pos-migracao e cutover | concluido |
-| 13 | Refactor: WEB01 para Azure App Service | concluido com limitacao documentada |
-| 14 | Framework de decisao dos 5 Rs | concluido |
+Os três primeiros labs estão mais focados na execução. Nos dois últimos, a ideia muda um pouco: em vez de simplesmente migrar tudo, o objetivo é avaliar qual estratégia faz mais sentido para cada carga.
 
----
+É justamente essa parte que considero mais importante em um projeto de migração. Migrar uma máquina para a nuvem é relativamente simples. O desafio é entender o que deve ser migrado, o que deve ser modernizado e o que talvez nem precise continuar existindo.
 
-## O arco do grupo
+Estratégias utilizadas
 
-Os cinco labs seguem uma progressao proposital:
+O Lab 14 reúne a análise feita ao longo do grupo. O resultado foi:
 
-```
-LAB 10   descobrir o que existe e quanto custa migrar
-LAB 11   migrar de fato (rehost)
-LAB 12   decidir se a migracao esta pronta para producao
-LAB 13   questionar se rehost era o melhor caminho
-LAB 14   aplicar o criterio a todas as cargas
-```
+Carga	Estratégia	Motivo
+contoso-web01	Refactor	A aplicação não possui dependências específicas do sistema operacional e pode ser executada em PaaS
+contoso-fs01	Replace	O Azure Files pode assumir o papel do File Server, aproveitando também o File Sync já configurado
+contoso-dc01	Retain	É a base da identidade do ambiente e deve ser uma das últimas cargas a serem retiradas
+contoso-gw01	Retire	Com a conectividade sendo feita pelo Azure VPN Gateway, o RRAS deixa de ter uma função necessária
 
-Os tres primeiros sao execucao. Os dois ultimos sao decisao - e e
-onde a diferenca entre migrar e migrar bem aparece.
+A WEB01 foi migrada inicialmente utilizando a estratégia de Rehost, por ser a opção mais simples e direta para colocar a carga no Azure.
 
----
+Depois, no Lab 13, comparei esse resultado com uma abordagem de Refactor, utilizando Azure App Service. A comparação mostrou uma redução significativa na quantidade de recursos envolvidos: de 7 recursos no rehost para 3 no refactor, além de uma redução estimada de quase 88% no custo mensal.
 
-## Estrategias aplicadas
+Limitações encontradas
 
-O Lab 14 consolida a analise, mas o resumo e:
+Durante os labs, encontrei dois problemas de ambiente. Em vez de simplesmente contornar os erros e seguir em frente, deixei os dois documentados nos respectivos labs.
 
-| Carga | Estrategia | Justificativa curta |
-|-------|-----------|---------------------|
-| contoso-web01 | Refactor | site sem dependencia de SO, cabe em PaaS |
-| contoso-fs01 | Replace | Azure Files substitui, File Sync ja configurado |
-| contoso-dc01 | Retain | raiz de identidade, sai depois de quem depende dela |
-| contoso-gw01 | Retire | sem rede local para rotear, VPN Gateway substitui |
+Lab 10 — Azure Migrate
 
-O rehost foi executado na WEB01 (Lab 11) como caminho mais direto, e
-o Lab 13 comparou com o refactor: 7 recursos contra 3, e reducao de
-aproximadamente 88 por cento no custo mensal.
+O Azure Migrate Appliance não conseguia concluir o registro. As conexões HTTPS com payloads maiores estavam sendo interrompidas pela rede residencial utilizada no laboratório. O mesmo comportamento já havia aparecido anteriormente durante a configuração do Entra Connect no Lab 07.
 
----
+Como alternativa, fiz o discovery utilizando a importação por CSV.
 
-## Limitacoes conhecidas
+Essa limitação acabou influenciando os próximos labs: o rehost da WEB01 foi feito utilizando IaC em vez de ASR, e o mapa de dependências do Lab 12 precisou ser construído manualmente.
 
-Dois bloqueios de ambiente afetaram este grupo. Ambos estao
-documentados em detalhe nos labs onde apareceram.
+Lab 13 — Azure App Service
 
-```
-LAB 10   Azure Migrate Appliance nao completa o registro
-         Conexoes HTTPS com payload maior caem na rede residencial
-         usada no lab - mesmo padrao do Lab 07 com Entra Connect.
-         Discovery feito por import CSV.
-         Consequencia no Lab 11: rehost por IaC em vez de ASR.
-         Consequencia no Lab 12: mapa de dependencias manual.
+No refactor da WEB01, encontrei uma limitação de cota para o App Service Plan na subscription utilizada no laboratório.
 
-LAB 13   Cota zerada para App Service Plan na subscription
-         Seis combinacoes testadas (Windows/Linux, B1/F1,
-         eastus2/brazilsouth) com o mesmo erro 401.
-         Terraform validado por plan, apply bloqueado.
-```
+Testei seis combinações diferentes, envolvendo Windows/Linux, B1/F1 e as regiões eastus2/brazilsouth, mas todas retornaram o mesmo erro 401.
 
-Em nenhum dos casos o resultado do lab foi perdido: o assessment saiu
-com sizing e custo, a WEB01 chegou no Azure servindo a mesma pagina, e
-a comparacao rehost x refactor esta fundamentada em codigo real.
+O Terraform conseguiu validar a configuração normalmente durante o plan, mas o apply ficou bloqueado pela limitação da subscription.
 
----
+Mesmo com essas limitações, os objetivos dos labs foram alcançados: o assessment foi realizado com sizing e estimativa de custos, a WEB01 foi migrada para o Azure e continuou servindo a mesma aplicação, e a comparação entre Rehost e Refactor foi feita utilizando infraestrutura e código reais.
 
-## Ciclo de vida dos recursos
+Ciclo de vida dos recursos
 
-Os recursos do Lab 11 foram criados, validados e destruidos com
-`terraform destroy` apos a coleta das evidencias. O codigo Terraform
-continua no repositorio e recria a infraestrutura quando necessario.
+Os recursos utilizados no Lab 11 foram criados, testados e, depois da coleta das evidências, removidos utilizando:
 
-Isso e proposital: em ambiente de estudo, manter uma VM de pe sem
-ninguem usando e so custo. Em migracao real a logica se inverte -
-depois do cutover, quem se desliga e a origem, nao o destino.
+terraform destroy
 
----
+O código permanece no repositório e permite recriar a infraestrutura novamente quando necessário.
 
-## Custos
+Essa decisão foi intencional. Como este é um ambiente de laboratório, não faz sentido manter recursos cobrando enquanto não estão sendo utilizados.
 
-Os labs de migracao criam recursos que cobram por hora. Cada lab avisa
-o momento de deletar e o que fica cobrando mesmo com a VM desligada
-(IP publico e disco continuam contando).
+Em uma migração real, porém, a lógica é diferente: depois do cutover, o objetivo é desligar a infraestrutura de origem e manter o ambiente que foi migrado ou modernizado no Azure.
 
-Regra geral do repositorio: tirar print antes de destruir qualquer coisa.
+Custos
+
+Os labs de migração utilizam recursos do Azure que podem gerar cobrança por hora.
+
+Por isso, cada laboratório indica quando os recursos podem ser removidos e quais componentes continuam gerando custo mesmo depois que uma VM é desligada. Um exemplo disso são discos e determinados IPs públicos.
+
+A regra que sigo neste repositório é simples:
+
+Primeiro coleto as evidências, depois destruo os recursos.
+
+Assim, consigo manter o laboratório reproduzível sem deixar recursos desnecessários gerando custos.
