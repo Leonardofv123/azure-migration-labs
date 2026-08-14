@@ -1,18 +1,16 @@
-# Grupo 2 - Fundacao Azure
+# Grupo 2: Fundacao Azure
 
-Segunda fase da trilha. O Grupo 1 construiu toda a base on-premises da Contoso do Brasil em Hyper-V: Active Directory, DNS, DHCP, File Server e IIS. Esta fase leva a empresa para a nuvem.
+Segunda fase da trilha. No Grupo 1 eu construi toda a base on-premises da Contoso do Brasil em Hyper-V: Active Directory, DNS, DHCP, File Server e IIS. Essa fase leva a empresa pra nuvem.
 
-Nao e uma migracao ainda. E a construcao do ambiente Azure que vai receber as cargas de trabalho, mais as pontes entre os dois mundos (identidade hibrida, VPN, monitoramento unificado). A migracao propriamente dita vem no Grupo 3, com Azure Migrate.
+Ainda nao e migracao. E a construcao do ambiente Azure que vai receber as cargas de trabalho, mais as pontes entre os dois mundos: identidade hibrida, VPN, monitoramento unificado. A migracao de verdade fica pro Grupo 3, com Azure Migrate.
 
-## Labs desta fase
+## Labs dessa fase
 
-| Lab | Tema | Status |
-|---|---|---|
-| [05](lab-05-azure-vnet-vm/) | Rede e VM no Azure (VNet, NSG, Terraform, Bicep) | Concluido |
-| [06](lab-06-storage-backup/) | Storage Account, Azure Backup e Azure File Sync | Concluido |
-| [07](lab-07-entra-connect/) | Microsoft Entra ID e Entra Connect (identidade hibrida) | Concluido |
-| [08](lab-08-vpn-site-to-site/) | VPN Site-to-Site | Concluido com limitacao documentada |
-| [09](lab-09-monitoramento/) | Monitoramento hibrido (Azure Monitor, Log Analytics, Arc) | Concluido |
+- **Lab 05**: rede e VM no Azure (VNet, NSG, Terraform, Bicep). Concluido.
+- **Lab 06**: Storage Account, Azure Backup e Azure File Sync. Concluido.
+- **Lab 07**: Microsoft Entra ID e Entra Connect, identidade hibrida. Concluido.
+- **Lab 08**: VPN Site to Site. Concluido com limitacao documentada.
+- **Lab 09**: monitoramento hibrido com Azure Monitor, Log Analytics e Arc. Concluido.
 
 ## Como os labs se encadeiam
 
@@ -30,21 +28,21 @@ Lab 07  Identidade hibrida
         |
         |  sincroniza o AD do Lab 02 com o Entra ID
         v
-Lab 08  VPN Site-to-Site
+Lab 08  VPN Site to Site
         |
         |  conecta 192.168.10.0/24 com 10.10.0.0/16
         v
 Lab 09  Monitoramento hibrido
         |
         |  Arc + AMA nas 3 VMs on-premises
-        |  tudo reportando ao mesmo workspace
+        |  tudo reportando pro mesmo workspace
         v
 Grupo 3  Migracao (Azure Migrate)
 ```
 
-O Lab 05 e pre-requisito direto do 06. Os demais sao independentes entre si. O 09, por exemplo, nao depende do tunel do 08, porque os agentes se comunicam por HTTPS/443.
+O Lab 05 e pre requisito direto do 06. Os outros sao independentes entre si. O 09, por exemplo, nem precisa do tunel do 08, porque os agentes conversam por HTTPS na porta 443.
 
-## Ambiente ao final desta fase
+## Como ficou o ambiente no final dessa fase
 
 ```
         ON-PREMISES (Hyper-V)                    AZURE
@@ -69,46 +67,44 @@ O Lab 05 e pre-requisito direto do 06. Os demais sao independentes entre si. O 0
 
 ## Resource Groups criados
 
-| Resource Group | Conteudo | Lab |
-|---|---|---|
-| `rg-network-prod-eus2` | VNet, sub-redes, NSG, VM web, VPN Gateway | 05, 08 |
-| `rg-storage-prod-eus2` | Storage Account, Storage Sync Service | 06 |
-| `rg-backup-prod-eus2` | Recovery Services Vault | 06 |
-| `rg-monitor-prod-eus2` | Log Analytics, DCRs, maquinas Arc | 09 |
+Separei os recursos em quatro RGs, pensando em governanca (rede, storage, backup e monitoramento tem ciclo de vida e responsavel diferente num ambiente real, entao nao faz sentido misturar tudo):
 
-A separacao por RG segue governanca: rede, storage, backup e monitoramento tem ciclos de vida e responsaveis diferentes em ambiente real.
+- **rg-network-prod-eus2**: VNet, sub-redes, NSG, VM web e VPN Gateway. Criado nos labs 05 e 08.
+- **rg-storage-prod-eus2**: Storage Account e Storage Sync Service. Lab 06.
+- **rg-backup-prod-eus2**: Recovery Services Vault. Lab 06.
+- **rg-monitor-prod-eus2**: Log Analytics, DCRs e as maquinas conectadas via Arc. Lab 09.
 
-## Sobre as secoes de troubleshooting
+## Sobre os perrengues
 
-Cada lab desta fase tem uma secao de desafios documentando os problemas reais enfrentados, incluindo os diagnosticos que estavam errados e o que revelou o engano.
+Cada lab dessa fase tem uma secao contando os problemas reais, incluindo os diagnosticos errados que eu fiz antes de achar a causa de verdade.
 
-Isso e proposital. Os erros mais instrutivos desta fase nao foram de sintaxe, foram de metodo:
+Isso e proposital. Os erros mais uteis dessa fase nao foram de sintaxe, foram de metodo:
 
-- **Lab 05** trocar de regiao tres vezes quando a variavel certa era a familia da VM
-- **Lab 06** um fix de TLS que valia por sessao de PowerShell, nao por maquina, fazendo o problema parecer aleatorio
-- **Lab 07** oito hipoteses eliminadas dentro da maquina antes de trocar a rede de saida, que era a causa
-- **Lab 08** verificar tunel e rota em momentos diferentes, produzindo conclusoes que nao batiam
-- **Lab 09** procurar um servico Windows que nao existia, concluindo que o agente estava quebrado quando ele rodava normalmente
+- **Lab 05**: troquei de regiao tres vezes quando o problema de verdade era a familia da VM
+- **Lab 06**: apliquei um fix de TLS que valia so pra sessao do PowerShell, nao pra maquina inteira, e isso fez o problema parecer aleatorio por um tempo
+- **Lab 07**: eliminei oito hipoteses dentro da maquina antes de pensar em trocar a rede de saida, que era a causa real
+- **Lab 08**: verifiquei o tunel e a rota em momentos diferentes, e isso me deu conclusoes que nao batiam entre si
+- **Lab 09**: fiquei procurando um servico Windows que nem existia, e quase concluí que o agente estava quebrado quando na verdade ele rodava normal
 
 ## Custos
 
-A maior parte desta fase cabe no tier gratuito ou custa pouco. Duas excecoes merecem atencao.
+A maior parte dessa fase cabe no tier gratuito ou custa pouco. Duas coisas merecem atencao.
 
-**VPN Gateway (Lab 08)** cobra por hora enquanto existir, leva 40 minutos para provisionar e 20 para deletar. E o recurso mais caro da trilha por unidade de tempo. Deve ser deletado assim que o objetivo do lab for atingido.
+O VPN Gateway (Lab 08) cobra por hora enquanto existir, leva uns 40 minutos pra provisionar e 20 pra deletar. E o recurso mais caro da trilha por unidade de tempo, entao a regra e deletar assim que o objetivo do lab for cumprido.
 
-**VM do Lab 05** usa Standard_D2s_v3, fora do tier gratuito por conta de cota zerada para a familia B em subscription nova. Auto-shutdown as 22h configurado como protecao.
+A VM do Lab 05 usa Standard_D2s_v3, fora do tier gratuito, porque minha subscription nova veio com cota zerada pra familia B. Deixei um auto shutdown configurado as 22h como protecao.
 
-Log Analytics, Azure Arc e Azure Monitor Agent sao gratuitos no volume deste lab.
+Log Analytics, Azure Arc e Azure Monitor Agent saem de graca no volume que eu uso nesse lab.
 
 ## Convencoes
 
-Seguem as mesmas do repositorio:
+As mesmas do resto do repositorio:
 
-- Toda infraestrutura nasce de script, idempotente
-- Segredos nunca versionados. Os scripts usam `Read-Host` ou `Get-Credential`
-- Diagramas em ASCII dentro de blocos de codigo
-- Screenshots de validacao em `screenshots/` de cada lab
+- Toda infraestrutura nasce de script, e idempotente
+- Segredo nenhum vai versionado, os scripts usam `Read-Host` ou `Get-Credential`
+- Diagramas em ASCII dentro de bloco de codigo
+- Screenshots de validacao ficam em `screenshots/` de cada lab
 
 ## Proxima fase
 
-**Grupo 3, Migracao.** Azure Migrate para discovery e assessment do ambiente on-premises, seguido do rehost das VMs. E onde a Contoso finalmente sai do Hyper-V.
+Grupo 3, Migracao. Azure Migrate entra pra fazer discovery e assessment do ambiente on-premises, e depois vem o rehost das VMs. E onde a Contoso finalmente sai do Hyper-V de vez.
